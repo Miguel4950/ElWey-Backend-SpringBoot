@@ -1,5 +1,6 @@
 package com.elwey.restaurante.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,6 +33,7 @@ public class Domiciliario {
     @Column(nullable = false, unique = false)
     private Boolean disponible;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "domiciliario")
     @Builder.Default
     private List<Pedido> pedidos = new ArrayList<>();

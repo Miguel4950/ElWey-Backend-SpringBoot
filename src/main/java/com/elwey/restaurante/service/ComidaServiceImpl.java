@@ -35,6 +35,12 @@ public class ComidaServiceImpl implements ComidaService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Comida> listarActivas() {
+        return comidaRepository.findByActivoTrue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Comida searchById(Long id) {
         return comidaRepository.findById(id)
                 .orElseThrow(() -> new ComidaNotFoundException(id));

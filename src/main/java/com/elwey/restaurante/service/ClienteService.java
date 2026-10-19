@@ -22,6 +22,8 @@ public interface ClienteService {
 
     Cliente guardar(Cliente cliente);
 
+    Cliente actualizar(Long id, Cliente cliente);
+
     void eliminar(Long id);
 
     default void eliminar(Integer id) {

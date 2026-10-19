@@ -1,69 +1,74 @@
 package com.elwey.restaurante.controller;
 
+import com.elwey.restaurante.dto.CrearPedidoDto;
+import com.elwey.restaurante.dto.PedidoDto;
 import com.elwey.restaurante.entities.Pedido;
-import com.elwey.restaurante.service.ClienteService;
-import com.elwey.restaurante.service.DomiciliarioService;
 import com.elwey.restaurante.service.PedidoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Controller
-@RequestMapping("/pedidos")
+@RestController
+@RequestMapping({ "/api/pedidos", "/pedidos" })
+@CrossOrigin(origins = "http://localhost:4200")
 public class PedidoController {
 
     @Autowired
     private PedidoService pedidoService;
 
-    @Autowired
-    private ClienteService clienteService;
+    private static final Logger log = LoggerFactory.getLogger(PedidoController.class);
 
-    @Autowired
-    private DomiciliarioService domiciliarioService;
-
-    Logger log = LoggerFactory.getLogger(PedidoController.class);
-
-    // http://localhost:8080/pedidos
-    @GetMapping()
-    public String mostrarPedidos(Model model) {
-        log.info("Consultando lista completa de pedidos");
-        model.addAttribute("pedidos", pedidoService.searchAll());
-        return "pedidos";
+    // http://localhost:8080/api/pedidos
+    @GetMapping({ "", "/", "/all" })
+    public ResponseEntity<List<PedidoDto>> mostrarPedidos() {
+        log.info("Petición REST: consultando lista completa de pedidos");
+        List<PedidoDto> dtos = pedidoService.searchAll().stream()
+                .map(PedidoDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
-    // http://localhost:8080/pedidos/1
-    @GetMapping("/{id}")
-    public String mostrarPedidoPorId(Model model, @PathVariable("id") Long id) {
-        log.info("Consultando detalle de pedido con ID: {}", id);
+    // http://localhost:8080/api/pedidos/1
+    @GetMapping({ "/{id}", "/find/{id}" })
+    public ResponseEntity<PedidoDto> mostrarPedidoPorId(@PathVariable("id") Long id) {
+        log.info("Petición REST: consultando detalle de pedido con ID: {}", id);
         Pedido pedido = pedidoService.searchById(id);
-        model.addAttribute("pedido", pedido);
-        return "pedido-detalle";
+        return ResponseEntity.ok(PedidoDto.fromEntity(pedido));
     }
 
-    // http://localhost:8080/pedidos/delete/1
-    @GetMapping("/delete/{id}")
-    public String eliminarPedido(@PathVariable("id") Long id) {
-        log.info("Eliminando pedido con ID: {}", id);
+    // http://localhost:8080/api/pedidos/cliente/1
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<List<PedidoDto>> mostrarPedidosPorCliente(@PathVariable("clienteId") Long clienteId) {
+        log.info("Petición REST: consultando pedidos para cliente ID: {}", clienteId);
+        List<PedidoDto> dtos = pedidoService.findByCliente(clienteId).stream()
+                .map(PedidoDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    // http://localhost:8080/api/pedidos/1
+    @DeleteMapping({ "/delete/{id}", "/{id}" })
+    public ResponseEntity<Void> eliminarPedido(@PathVariable("id") Long id) {
+        log.info("Petición REST: eliminando pedido con ID: {}", id);
         pedidoService.delete(id);
-        return "redirect:/pedidos?eliminado";
+        return ResponseEntity.noContent().build();
     }
 
-    // POST http://localhost:8080/pedidos/ordenar
-    @PostMapping("/ordenar")
-    public String ordenarPlatoConAdicionales(
-            @RequestParam("comidaId") Long comidaId,
-            @RequestParam(name = "adicionalesIds", required = false) List<Long> adicionalesIds) {
-        log.info("Creando pedido para comida ID {} con adicionales seleccionados: {}", comidaId, adicionalesIds);
-        pedidoService.crearPedidoRapido(comidaId, adicionalesIds);
-        return "redirect:/pedidos";
+    // http://localhost:8080/api/pedidos/ordenar
+    @PostMapping({ "", "/", "/ordenar", "/add" })
+    public ResponseEntity<PedidoDto> ordenarPlatoConAdicionales(@RequestBody CrearPedidoDto orderRequest) {
+        if (orderRequest == null || orderRequest.getComidaId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("Petición REST: creando pedido para comida ID {} (cantidad: {})",
+                orderRequest.getComidaId(), orderRequest.getCantidad());
+        Pedido nuevo = pedidoService.crearPedido(orderRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(PedidoDto.fromEntity(nuevo));
     }
 }

@@ -1,5 +1,6 @@
 package com.elwey.restaurante.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,6 +43,7 @@ public class Comida {
     private Categoria categoria;
 
     // Métodos de compatibilidad con las vistas de plantillas
+    @JsonIgnore
     public Comida getComida() {
         return this;
     }

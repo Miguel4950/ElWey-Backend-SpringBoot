@@ -7,6 +7,7 @@ import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Comida;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.ItemPedido;
+import com.elwey.restaurante.entities.ItemPedidoAdicional;
 import com.elwey.restaurante.entities.Operador;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.repository.AdicionalRepository;
@@ -15,6 +16,7 @@ import com.elwey.restaurante.repository.CategoriaRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
 import com.elwey.restaurante.repository.ComidaRepository;
 import com.elwey.restaurante.repository.DomiciliarioRepository;
+import com.elwey.restaurante.repository.ItemPedidoAdicionalRepository;
 import com.elwey.restaurante.repository.ItemPedidoRepository;
 import com.elwey.restaurante.repository.OperadorRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
@@ -51,6 +53,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private ItemPedidoRepository itemPedidoRepository;
+
+    @Autowired
+    private ItemPedidoAdicionalRepository itemPedidoAdicionalRepository;
 
     @Autowired
     private AdministradorRepository administradorRepository;
@@ -376,7 +381,7 @@ public class DataLoader implements CommandLineRunner {
         operadorRepository.save(Operador.builder().nombre("Juan Camilo Chef").usuario("chef_camilo").contrasena("cocina123").build());
         operadorRepository.save(Operador.builder().nombre("Paola Despachos").usuario("paola_despachos").contrasena("despacho123").build());
 
-        // 8. Crear pedidos iniciales con sus Items, Comidas y Adicionales
+        // 8. Crear pedidos iniciales con sus Items, Comidas y Adicionales (con cantidad en tabla intermedia)
         List<Cliente> clientesEnDb = clienteRepository.findAll();
         Cliente messi = clientesEnDb.get(0);
         Cliente cr7 = clientesEnDb.get(1);
@@ -394,21 +399,20 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped1 = pedidoRepository.save(ped1);
 
-        ItemPedido item1Ped1 = ItemPedido.builder()
+        ItemPedido item1Ped1 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped1)
                 .comida(comidas.get(0)) // Tacos al Pastor (18000)
                 .cantidad(2)
-                .adicionales(List.of(adicionales.get(0), adicionales.get(2)))
-                .build();
-        itemPedidoRepository.save(item1Ped1);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped1).adicional(adicionales.get(0)).cantidad(2).build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped1).adicional(adicionales.get(2)).cantidad(1).build());
 
-        ItemPedido item2Ped1 = ItemPedido.builder()
+        ItemPedido item2Ped1 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped1)
                 .comida(comidas.get(2)) // Guacamole El Wey (15000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(6)))
-                .build();
-        itemPedidoRepository.save(item2Ped1);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped1).adicional(adicionales.get(6)).cantidad(1).build());
 
         // Pedido 2: CR7
         Pedido ped2 = Pedido.builder()
@@ -419,21 +423,19 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped2 = pedidoRepository.save(ped2);
 
-        ItemPedido item1Ped2 = ItemPedido.builder()
+        ItemPedido item1Ped2 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped2)
                 .comida(comidas.get(1)) // Quesadilla de Birria (22000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(9)))
-                .build();
-        itemPedidoRepository.save(item1Ped2);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped2).adicional(adicionales.get(9)).cantidad(1).build());
 
-        ItemPedido item2Ped2 = ItemPedido.builder()
+        ItemPedido item2Ped2 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped2)
                 .comida(comidas.get(4)) // Burrito Norteño (24000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(12)))
-                .build();
-        itemPedidoRepository.save(item2Ped2);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped2).adicional(adicionales.get(12)).cantidad(2).build());
 
         // Pedido 3: Falcao
         Pedido ped3 = Pedido.builder()
@@ -445,21 +447,19 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped3 = pedidoRepository.save(ped3);
 
-        ItemPedido item1Ped3 = ItemPedido.builder()
+        ItemPedido item1Ped3 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped3)
                 .comida(comidas.get(6)) // Nachos El Wey (23000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(4)))
-                .build();
-        itemPedidoRepository.save(item1Ped3);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped3).adicional(adicionales.get(4)).cantidad(1).build());
 
-        ItemPedido item2Ped3 = ItemPedido.builder()
+        ItemPedido item2Ped3 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped3)
                 .comida(comidas.get(7)) // Gringa con Carne (21000)
                 .cantidad(2)
-                .adicionales(List.of(adicionales.get(3)))
-                .build();
-        itemPedidoRepository.save(item2Ped3);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped3).adicional(adicionales.get(3)).cantidad(2).build());
 
         // Pedido 4: James Rodríguez
         Pedido ped4 = Pedido.builder()
@@ -470,21 +470,19 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped4 = pedidoRepository.save(ped4);
 
-        ItemPedido item1Ped4 = ItemPedido.builder()
+        ItemPedido item1Ped4 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped4)
                 .comida(comidas.get(3)) // Enchiladas Rojas (20000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(10)))
-                .build();
-        itemPedidoRepository.save(item1Ped4);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped4).adicional(adicionales.get(10)).cantidad(1).build());
 
-        ItemPedido item2Ped4 = ItemPedido.builder()
+        ItemPedido item2Ped4 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped4)
                 .comida(comidas.get(5)) // Tacos de Suadero (19000)
                 .cantidad(2)
-                .adicionales(List.of(adicionales.get(1)))
-                .build();
-        itemPedidoRepository.save(item2Ped4);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped4).adicional(adicionales.get(1)).cantidad(1).build());
 
         // Pedido 5: Luis Díaz
         Pedido ped5 = Pedido.builder()
@@ -496,21 +494,19 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped5 = pedidoRepository.save(ped5);
 
-        ItemPedido item1Ped5 = ItemPedido.builder()
+        ItemPedido item1Ped5 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped5)
                 .comida(comidas.get(28)) // Burrito California (25000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(13)))
-                .build();
-        itemPedidoRepository.save(item1Ped5);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped5).adicional(adicionales.get(13)).cantidad(1).build());
 
-        ItemPedido item2Ped5 = ItemPedido.builder()
+        ItemPedido item2Ped5 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped5)
                 .comida(comidas.get(11)) // Quesadilla de Chicharrón Prensado (19000)
                 .cantidad(1)
-                .adicionales(List.of(adicionales.get(3)))
-                .build();
-        itemPedidoRepository.save(item2Ped5);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped5).adicional(adicionales.get(3)).cantidad(1).build());
 
         // Pedido 6: Neymar Jr
         Pedido ped6 = Pedido.builder()
@@ -521,12 +517,12 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         ped6 = pedidoRepository.save(ped6);
 
-        ItemPedido item1Ped6 = ItemPedido.builder()
+        ItemPedido item1Ped6 = itemPedidoRepository.save(ItemPedido.builder()
                 .pedido(ped6)
                 .comida(comidas.get(10)) // Tacos Gobernador (25000)
                 .cantidad(2)
-                .adicionales(List.of(adicionales.get(0), adicionales.get(1)))
-                .build();
-        itemPedidoRepository.save(item1Ped6);
+                .build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped6).adicional(adicionales.get(0)).cantidad(1).build());
+        itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped6).adicional(adicionales.get(1)).cantidad(2).build());
     }
 }

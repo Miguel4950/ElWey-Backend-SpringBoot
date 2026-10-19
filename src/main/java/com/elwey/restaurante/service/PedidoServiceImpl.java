@@ -1,10 +1,12 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.dto.CrearPedidoDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Comida;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.ItemPedido;
+import com.elwey.restaurante.entities.ItemPedidoAdicional;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.ComidaNotFoundException;
 import com.elwey.restaurante.errors.PedidoNotFoundException;
@@ -12,6 +14,7 @@ import com.elwey.restaurante.repository.AdicionalRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
 import com.elwey.restaurante.repository.ComidaRepository;
 import com.elwey.restaurante.repository.DomiciliarioRepository;
+import com.elwey.restaurante.repository.ItemPedidoAdicionalRepository;
 import com.elwey.restaurante.repository.ItemPedidoRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +45,9 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Autowired
     private ItemPedidoRepository itemPedidoRepository;
+
+    @Autowired
+    private ItemPedidoAdicionalRepository itemPedidoAdicionalRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -78,7 +84,6 @@ public class PedidoServiceImpl implements PedidoService {
     @Transactional
     public void delete(Long id) {
         Pedido pedido = searchById(id);
-        // Limpiar colecciones asociadas para garantizar integridad antes del borrado
         if (pedido.getItems() != null) {
             for (ItemPedido item : pedido.getItems()) {
                 if (item.getAdicionales() != null) {
@@ -93,40 +98,82 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public void crearPedidoRapido(Long comidaId, List<Long> adicionalesIds) {
-        Comida comida = comidaRepository.findById(comidaId)
-                .orElseThrow(() -> new ComidaNotFoundException(comidaId));
+        List<CrearPedidoDto.AdicionalCantidadDto> adics = new ArrayList<>();
+        if (adicionalesIds != null) {
+            for (Long id : adicionalesIds) {
+                if (id != null) {
+                    adics.add(CrearPedidoDto.AdicionalCantidadDto.builder()
+                            .adicionalId(id)
+                            .cantidad(1)
+                            .build());
+                }
+            }
+        }
+        crearPedido(CrearPedidoDto.builder()
+                .comidaId(comidaId)
+                .cantidad(1)
+                .adicionales(adics)
+                .build());
+    }
 
-        List<Cliente> clientes = clienteRepository.findAll();
-        Cliente cliente = clientes.isEmpty() ? null : clientes.get(0);
+    @Override
+    @Transactional
+    public Pedido crearPedido(CrearPedidoDto dto) {
+        Comida comida = comidaRepository.findById(dto.getComidaId())
+                .orElseThrow(() -> new ComidaNotFoundException(dto.getComidaId()));
+
+        Cliente cliente = null;
+        if (dto.getClienteId() != null) {
+            cliente = clienteRepository.findById(dto.getClienteId()).orElse(null);
+        }
+        if (cliente == null) {
+            List<Cliente> clientes = clienteRepository.findAll();
+            cliente = clientes.isEmpty() ? null : clientes.get(0);
+        }
 
         List<Domiciliario> domiciliarios = domiciliarioRepository.findAll();
         Domiciliario domiciliario = domiciliarios.isEmpty() ? null : domiciliarios.get(0);
 
-        List<Adicional> seleccionados = new ArrayList<>();
-        if (adicionalesIds != null && !adicionalesIds.isEmpty()) {
-            for (Long adicId : adicionalesIds) {
-                Adicional a = adicionalRepository.findById(adicId).orElse(null);
-                if (a != null) {
-                    seleccionados.add(a);
-                }
-            }
-        }
+        int cantidadFinal = (dto.getCantidad() != null && dto.getCantidad() > 0) ? dto.getCantidad() : 1;
 
         Pedido pedido = Pedido.builder()
                 .cliente(cliente)
                 .domiciliario(domiciliario)
                 .estado("En preparación")
                 .fechaCreacion(LocalDateTime.now())
+                .items(new ArrayList<>())
                 .build();
         pedido = pedidoRepository.save(pedido);
 
         ItemPedido item = ItemPedido.builder()
                 .pedido(pedido)
                 .comida(comida)
-                .cantidad(1)
-                .adicionales(seleccionados)
+                .cantidad(cantidadFinal)
+                .adicionales(new ArrayList<>())
                 .build();
-        itemPedidoRepository.save(item);
+        item = itemPedidoRepository.save(item);
+
+        if (dto.getAdicionales() != null) {
+            for (CrearPedidoDto.AdicionalCantidadDto adicReq : dto.getAdicionales()) {
+                if (adicReq != null && adicReq.getAdicionalId() != null
+                        && adicReq.getCantidad() != null && adicReq.getCantidad() > 0) {
+                    Adicional adicional = adicionalRepository.findById(adicReq.getAdicionalId()).orElse(null);
+                    if (adicional != null) {
+                        ItemPedidoAdicional relacion = ItemPedidoAdicional.builder()
+                                .itemPedido(item)
+                                .adicional(adicional)
+                                .cantidad(adicReq.getCantidad())
+                                .build();
+                        relacion = itemPedidoAdicionalRepository.save(relacion);
+                        item.getAdicionales().add(relacion);
+                    }
+                }
+            }
+        }
+
+        pedido.getItems().add(item);
+        calcularTotales(pedido);
+        return pedido;
     }
 
     @Override
@@ -136,9 +183,10 @@ public class PedidoServiceImpl implements PedidoService {
                 ? item.getComida().getPrecio() : 0.0;
         double sumaAdicionales = 0.0;
         if (item.getAdicionales() != null) {
-            for (Adicional a : item.getAdicionales()) {
-                if (a.getPrecio() != null) {
-                    sumaAdicionales += a.getPrecio();
+            for (ItemPedidoAdicional ipa : item.getAdicionales()) {
+                if (ipa != null && ipa.getAdicional() != null && ipa.getAdicional().getPrecio() != null) {
+                    int cantAdic = (ipa.getCantidad() != null && ipa.getCantidad() > 0) ? ipa.getCantidad() : 1;
+                    sumaAdicionales += ipa.getAdicional().getPrecio() * cantAdic;
                 }
             }
         }

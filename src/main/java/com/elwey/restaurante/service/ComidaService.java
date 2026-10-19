@@ -8,6 +8,8 @@ public interface ComidaService {
     // Operaciones principales del servicio de comidas
     List<Comida> seeAll();
 
+    List<Comida> listarActivas();
+
     Comida searchById(Long id);
 
     void save(Comida comida, Long categoriaId);

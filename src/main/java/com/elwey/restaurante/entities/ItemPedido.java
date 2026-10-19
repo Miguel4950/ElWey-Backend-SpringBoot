@@ -1,7 +1,10 @@
 package com.elwey.restaurante.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,7 @@ public class ItemPedido {
     @Transient
     private Double subtotal;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "id_pedido", nullable = false, unique = false)
     private Pedido pedido;
@@ -34,12 +38,8 @@ public class ItemPedido {
     @JoinColumn(name = "id_comida", nullable = false, unique = false)
     private Comida comida;
 
-    @ManyToMany
-    @JoinTable(
-        name = "item_pedido_adicional",
-        joinColumns = @JoinColumn(name = "id_item"),
-        inverseJoinColumns = @JoinColumn(name = "id_adicional")
-    )
+    @OneToMany(mappedBy = "itemPedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Builder.Default
-    private List<Adicional> adicionales = new ArrayList<>();
+    private List<ItemPedidoAdicional> adicionales = new ArrayList<>();
 }

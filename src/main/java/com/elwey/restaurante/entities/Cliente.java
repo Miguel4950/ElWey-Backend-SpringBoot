@@ -1,5 +1,6 @@
 package com.elwey.restaurante.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -40,6 +41,11 @@ public class Cliente {
     @Column(nullable = true, unique = false, length = 30)
     private String fechaRegistro;
 
+    @Column(nullable = false, unique = false)
+    @Builder.Default
+    private Boolean activo = true;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "cliente")
     @Builder.Default
     private List<Pedido> pedidos = new ArrayList<>();
@@ -59,6 +65,10 @@ public class Cliente {
 
     public void setContrasena(String contrasena) {
         this.password = contrasena;
+    }
+
+    public boolean getActivo() {
+        return this.activo;
     }
 
     public String getNombreCompleto() {

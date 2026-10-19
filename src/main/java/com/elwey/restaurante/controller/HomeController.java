@@ -1,18 +1,24 @@
 package com.elwey.restaurante.controller;
 
+import com.elwey.restaurante.dto.ClienteDto;
+import com.elwey.restaurante.dto.ComidaDto;
+import com.elwey.restaurante.dto.LoginRequestDto;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.service.ClienteService;
 import com.elwey.restaurante.service.ComidaService;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@CrossOrigin(origins = "http://localhost:4200")
 public class HomeController {
 
     @Autowired
@@ -21,139 +27,76 @@ public class HomeController {
     @Autowired
     private ClienteService clienteService;
 
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
+
     /**
-     * GET /, GET /index, GET /home – Muestra la página principal con la lista de
-     * comidas.
-     * Envía al modelo:
-     * • comidas – colección de platos para mostrar en la portada
+     * GET /, GET /index, GET /home
+     * Retorna la colección de platos destacados para la página de inicio en formato JSON.
      */
     @GetMapping({ "/", "/index", "/home" })
-    public String inicio(Model model) {
-        model.addAttribute("comidas", service.listarTodas());
-        return "index";
+    public ResponseEntity<List<ComidaDto>> inicio() {
+        log.info("Petición REST: consultar comidas para inicio");
+        List<ComidaDto> dtos = service.listarTodas().stream()
+                .map(ComidaDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     /**
-     * GET /menu – Redirige a la vista de tarjetas del menú.
-     * Envía al modelo:
-     * • no agrega datos, solo redirige a la ruta definida
-     */
-    @GetMapping("/menu")
-    public String menuRedirect() {
-        return "redirect:/comidas/tarjetas";
-    }
-
-    /**
-     * GET /h2-console, GET /consola – Redirige a la consola de base de datos H2.
-     */
-    @GetMapping({ "/h2-console", "/consola" })
-    public String h2ConsoleRedirect() {
-        return "redirect:/h2";
-    }
-
-    /**
-     * GET /login – Muestra la pantalla de inicio de sesión del cliente.
-     * Envía al modelo:
-     * • no agrega datos, solo carga la vista de login
-     */
-    @GetMapping("/login")
-    public String login() {
-        return "login";
-    }
-
-    /**
-     * POST /login – Valida las credenciales del usuario e inicia la sesión.
-     * Recibe:
-     * • email – correo del cliente
-     * • password – contraseña ingresada
-     * • rol – perfil seleccionado por el usuario
-     * Envía al modelo:
-     * • errorMessage – mensaje de credenciales inválidas obtenido de la excepción
-     * • error – bandera para mostrar error en la vista
-     * • email – valor reescrito para mantener el formulario
-     * • selectedRol – rol elegido por el usuario
+     * POST /login
+     * Valida las credenciales del usuario y retorna el objeto Cliente autenticado.
      */
     @PostMapping("/login")
-    public String iniciarSesion(
-            @RequestParam String email,
-            @RequestParam String password,
-            Model model) {
+    public ResponseEntity<?> iniciarSesion(@RequestBody LoginRequestDto loginRequest) {
+        log.info("Petición REST login para: {}", loginRequest != null ? loginRequest.getCorreo() : "null");
+        if (loginRequest == null || loginRequest.getCorreo() == null || loginRequest.getContrasena() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensaje", "Debe proporcionar correo y contraseña."));
+        }
         try {
-            Cliente cliente = clienteService.autenticar(email, password);
-
-            if ("admin@elwey.com".equalsIgnoreCase(email.trim())) {
-                return "redirect:/admin/productos";
-            } else if ("operador@elwey.com".equalsIgnoreCase(email.trim())) {
-                return "redirect:/admin/vertodo";
-            } else {
-                return "redirect:/cliente/portal/" + cliente.getId();
-            }
+            Cliente cliente = clienteService.autenticar(loginRequest.getCorreo(), loginRequest.getContrasena());
+            return ResponseEntity.ok(ClienteDto.fromEntity(cliente));
         } catch (IllegalArgumentException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("error", true);
-            model.addAttribute("email", email);
-            return "login";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("mensaje", "Credenciales inválidas. Verifica tu correo y contraseña."));
         }
     }
 
     /**
-     * GET /registro – Muestra el formulario para crear una nueva cuenta.
-     * Envía al modelo:
-     * • cliente – objeto Cliente vacío para el formulario
-     */
-    @GetMapping("/registro")
-    public String registro(Model model) {
-        model.addAttribute("cliente", new Cliente());
-        return "registro";
-    }
-
-    /**
-     * POST /registro – Registra un nuevo cliente en la aplicación.
+     * POST /registro
+     * Registra un nuevo cliente y retorna el objeto guardado en JSON.
      */
     @PostMapping("/registro")
-    public String registrarCliente(
-            @ModelAttribute("cliente") Cliente cliente,
-            @RequestParam(required = false, defaultValue = "CLIENTE") String rol,
-            Model model) {
-        try {
-            Cliente guardado = clienteService.guardar(cliente);
-            return "redirect:/cliente/portal/" + guardado.getId();
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("error", true);
-            model.addAttribute("selectedRol", rol);
-            return "registro";
-        }
+    public ResponseEntity<ClienteDto> registrarCliente(@RequestBody ClienteDto dto) {
+        log.info("Petición REST registro para cliente: {}", dto != null ? dto.getCorreo() : "null");
+        Cliente cliente = dto.toEntity();
+        Cliente guardado = clienteService.guardar(cliente);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ClienteDto.fromEntity(guardado));
     }
 
     /**
-     * GET /admin/productos – Muestra el listado administrativo de platos con
-     * búsqueda opcional.
-     * Recibe:
-     * • q – texto de búsqueda por nombre del plato
-     * Envía al modelo:
-     * • comidas – resultados filtrados por nombre
-     * • query – término de búsqueda ingresado
-     * • esAdmin – bandera que activa el modo administración
+     * GET /admin/productos
+     * Retorna listado de comidas con filtro opcional por query.
      */
     @GetMapping("/admin/productos")
-    public String adminProductos(@RequestParam(name = "q", required = false) String query, Model model) {
-        model.addAttribute("comidas", service.buscarPorNombre(query));
-        model.addAttribute("query", query);
-        // Dependiendo de la URL (/admin/productos) enviamos true al modelo
-        model.addAttribute("esAdmin", true);
-        return "comidas-tabla";
+    public ResponseEntity<List<ComidaDto>> adminProductos(@RequestParam(name = "q", required = false) String query) {
+        log.info("Petición REST: consultar productos administrativos");
+        List<ComidaDto> dtos = service.buscarPorNombre(query).stream()
+                .map(ComidaDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     /**
-     * GET /admin/vertodo – Muestra la vista administrativa con todas las tarjetas
-     * de clientes.
-     * Envía al modelo:
-     * • clientes – listado completo de clientes registrados
+     * GET /admin/vertodo, GET /admin/clientes
+     * Retorna el listado completo de clientes registrados.
      */
-    @GetMapping("/admin/vertodo")
-    public String verTodosLosClientes(Model model) {
-        model.addAttribute("clientes", clienteService.listarTodos());
-        return "admin-clientes";
+    @GetMapping({ "/admin/vertodo", "/admin/clientes" })
+    public ResponseEntity<List<ClienteDto>> verTodosLosClientes() {
+        log.info("Petición REST: consultar todos los clientes");
+        List<ClienteDto> dtos = clienteService.listarTodos().stream()
+                .map(ClienteDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 }
