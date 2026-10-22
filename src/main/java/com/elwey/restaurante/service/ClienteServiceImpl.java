@@ -1,10 +1,12 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.entities.Administrador;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Operador;
 import com.elwey.restaurante.errors.ClienteConPedidosException;
 import com.elwey.restaurante.errors.ClienteNotFoundException;
 import com.elwey.restaurante.errors.CredencialesInvalidasException;
+import com.elwey.restaurante.repository.AdministradorRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
 import com.elwey.restaurante.repository.OperadorRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
@@ -27,6 +29,9 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Autowired
     private OperadorRepository operadorRepo;
+
+    @Autowired
+    private AdministradorRepository administradorRepo;
 
     Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);
 
@@ -78,6 +83,22 @@ public class ClienteServiceImpl implements ClienteService {
                         .email("operador@elwey.com")
                         .telefono("+57 300 000 0002")
                         .direccion("Sede Cocina y Despachos, Bogotá")
+                        .activo(true)
+                        .build();
+            }
+
+            Administrador adm = administradorRepo.findByUsuario(email.trim()).orElse(null);
+            if (adm != null && password.equals(adm.getContrasena())) {
+                Cliente adminCliente = obtenerPorEmail("admin@elwey.com");
+                if (adminCliente != null) {
+                    return adminCliente;
+                }
+                return Cliente.builder()
+                        .id(adm.getId())
+                        .nombre("Administrador")
+                        .email("admin@elwey.com")
+                        .telefono("+57 300 000 0001")
+                        .direccion("Sede Administrativa El Wey, Bogotá")
                         .activo(true)
                         .build();
             }

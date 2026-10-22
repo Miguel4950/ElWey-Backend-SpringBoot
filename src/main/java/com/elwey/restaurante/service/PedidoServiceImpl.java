@@ -119,9 +119,6 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     @Transactional
     public Pedido crearPedido(CrearPedidoDto dto) {
-        Comida comida = comidaRepository.findById(dto.getComidaId())
-                .orElseThrow(() -> new ComidaNotFoundException(dto.getComidaId()));
-
         Cliente cliente = null;
         if (dto.getClienteId() != null) {
             cliente = clienteRepository.findById(dto.getClienteId()).orElse(null);
@@ -134,8 +131,6 @@ public class PedidoServiceImpl implements PedidoService {
         List<Domiciliario> domiciliarios = domiciliarioRepository.findAll();
         Domiciliario domiciliario = domiciliarios.isEmpty() ? null : domiciliarios.get(0);
 
-        int cantidadFinal = (dto.getCantidad() != null && dto.getCantidad() > 0) ? dto.getCantidad() : 1;
-
         Pedido pedido = Pedido.builder()
                 .cliente(cliente)
                 .domiciliario(domiciliario)
@@ -145,33 +140,77 @@ public class PedidoServiceImpl implements PedidoService {
                 .build();
         pedido = pedidoRepository.save(pedido);
 
-        ItemPedido item = ItemPedido.builder()
-                .pedido(pedido)
-                .comida(comida)
-                .cantidad(cantidadFinal)
-                .adicionales(new ArrayList<>())
-                .build();
-        item = itemPedidoRepository.save(item);
+        // Caso 1: Pedido desde el Carrito de Compras (múltiples ítems/comidas)
+        if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (CrearPedidoDto.ItemPedidoRequestDto itemReq : dto.getItems()) {
+                if (itemReq != null && itemReq.getComidaId() != null) {
+                    Comida comida = comidaRepository.findById(itemReq.getComidaId())
+                            .orElseThrow(() -> new ComidaNotFoundException(itemReq.getComidaId()));
+                    int cantidad = (itemReq.getCantidad() != null && itemReq.getCantidad() > 0) ? itemReq.getCantidad() : 1;
 
-        if (dto.getAdicionales() != null) {
-            for (CrearPedidoDto.AdicionalCantidadDto adicReq : dto.getAdicionales()) {
-                if (adicReq != null && adicReq.getAdicionalId() != null
-                        && adicReq.getCantidad() != null && adicReq.getCantidad() > 0) {
-                    Adicional adicional = adicionalRepository.findById(adicReq.getAdicionalId()).orElse(null);
-                    if (adicional != null) {
-                        ItemPedidoAdicional relacion = ItemPedidoAdicional.builder()
-                                .itemPedido(item)
-                                .adicional(adicional)
-                                .cantidad(adicReq.getCantidad())
-                                .build();
-                        relacion = itemPedidoAdicionalRepository.save(relacion);
-                        item.getAdicionales().add(relacion);
+                    ItemPedido item = ItemPedido.builder()
+                            .pedido(pedido)
+                            .comida(comida)
+                            .cantidad(cantidad)
+                            .adicionales(new ArrayList<>())
+                            .build();
+                    item = itemPedidoRepository.save(item);
+
+                    if (itemReq.getAdicionales() != null) {
+                        for (CrearPedidoDto.AdicionalCantidadDto adicReq : itemReq.getAdicionales()) {
+                            if (adicReq != null && adicReq.getAdicionalId() != null
+                                    && adicReq.getCantidad() != null && adicReq.getCantidad() > 0) {
+                                Adicional adicional = adicionalRepository.findById(adicReq.getAdicionalId()).orElse(null);
+                                if (adicional != null) {
+                                    ItemPedidoAdicional relacion = ItemPedidoAdicional.builder()
+                                            .itemPedido(item)
+                                            .adicional(adicional)
+                                            .cantidad(adicReq.getCantidad())
+                                            .build();
+                                    relacion = itemPedidoAdicionalRepository.save(relacion);
+                                    item.getAdicionales().add(relacion);
+                                }
+                            }
+                        }
                     }
+                    pedido.getItems().add(item);
                 }
             }
         }
+        // Caso 2: Pedido individual directo (retrocompatibilidad)
+        else if (dto.getComidaId() != null) {
+            Comida comida = comidaRepository.findById(dto.getComidaId())
+                    .orElseThrow(() -> new ComidaNotFoundException(dto.getComidaId()));
+            int cantidadFinal = (dto.getCantidad() != null && dto.getCantidad() > 0) ? dto.getCantidad() : 1;
 
-        pedido.getItems().add(item);
+            ItemPedido item = ItemPedido.builder()
+                    .pedido(pedido)
+                    .comida(comida)
+                    .cantidad(cantidadFinal)
+                    .adicionales(new ArrayList<>())
+                    .build();
+            item = itemPedidoRepository.save(item);
+
+            if (dto.getAdicionales() != null) {
+                for (CrearPedidoDto.AdicionalCantidadDto adicReq : dto.getAdicionales()) {
+                    if (adicReq != null && adicReq.getAdicionalId() != null
+                            && adicReq.getCantidad() != null && adicReq.getCantidad() > 0) {
+                        Adicional adicional = adicionalRepository.findById(adicReq.getAdicionalId()).orElse(null);
+                        if (adicional != null) {
+                            ItemPedidoAdicional relacion = ItemPedidoAdicional.builder()
+                                    .itemPedido(item)
+                                    .adicional(adicional)
+                                    .cantidad(adicReq.getCantidad())
+                                    .build();
+                            relacion = itemPedidoAdicionalRepository.save(relacion);
+                            item.getAdicionales().add(relacion);
+                        }
+                    }
+                }
+            }
+            pedido.getItems().add(item);
+        }
+
         calcularTotales(pedido);
         return pedido;
     }

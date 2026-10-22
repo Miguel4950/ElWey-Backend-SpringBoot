@@ -63,11 +63,12 @@ public class PedidoController {
     // http://localhost:8080/api/pedidos/ordenar
     @PostMapping({ "", "/", "/ordenar", "/add" })
     public ResponseEntity<PedidoDto> ordenarPlatoConAdicionales(@RequestBody CrearPedidoDto orderRequest) {
-        if (orderRequest == null || orderRequest.getComidaId() == null) {
+        if (orderRequest == null || (orderRequest.getComidaId() == null && (orderRequest.getItems() == null || orderRequest.getItems().isEmpty()))) {
             return ResponseEntity.badRequest().build();
         }
-        log.info("Petición REST: creando pedido para comida ID {} (cantidad: {})",
-                orderRequest.getComidaId(), orderRequest.getCantidad());
+        log.info("Petición REST: creando pedido en BD (comidaId: {}, items: {})",
+                orderRequest.getComidaId(),
+                orderRequest.getItems() != null ? orderRequest.getItems().size() : 0);
         Pedido nuevo = pedidoService.crearPedido(orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(PedidoDto.fromEntity(nuevo));
     }

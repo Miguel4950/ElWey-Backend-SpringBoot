@@ -24,6 +24,24 @@ public class CrearPedidoDto {
 
     private Long clienteId;
 
+    @Builder.Default
+    private List<ItemPedidoRequestDto> items = new ArrayList<>();
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ItemPedidoRequestDto {
+        private Long comidaId;
+
+        @Builder.Default
+        private Integer cantidad = 1;
+
+        @Builder.Default
+        private List<AdicionalCantidadDto> adicionales = new ArrayList<>();
+    }
+
     @Getter
     @Setter
     @NoArgsConstructor
