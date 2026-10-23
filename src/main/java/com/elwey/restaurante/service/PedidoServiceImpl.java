@@ -230,7 +230,7 @@ public class PedidoServiceImpl implements PedidoService {
             }
         }
         int cantidad = (item.getCantidad() != null && item.getCantidad() > 0) ? item.getCantidad() : 1;
-        return (precioComida * cantidad) + sumaAdicionales;
+        return (precioComida + sumaAdicionales) * cantidad;
     }
 
     @Override
