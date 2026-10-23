@@ -9,13 +9,17 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad que representa un Adicional (ingrediente extra, salsa, complemento).
+ * Mapea relaciones ManyToMany con Categoria y Comida, y OneToMany con ItemPedidoAdicional.
+ */
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"categorias", "itemAdicionales"})
+@ToString(exclude = {"categorias", "itemAdicionales", "comidas"})
 public class Adicional {
 
     @Id
@@ -37,6 +41,11 @@ public class Adicional {
     @ManyToMany(mappedBy = "adicionales")
     @Builder.Default
     private List<Categoria> categorias = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "adicionalesDisponibles")
+    @Builder.Default
+    private List<Comida> comidas = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "adicional", cascade = CascadeType.ALL)

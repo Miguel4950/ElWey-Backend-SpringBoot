@@ -362,6 +362,15 @@ public class DataLoader implements CommandLineRunner {
         categoriaRepository.save(catEspecialidades);
         categoriaRepository.save(catBurritos);
 
+        // Asociar adicionales disponibles a cada una de las 40 comidas desde su categoría
+        List<Comida> todasLasComidas = comidaRepository.findAll();
+        for (Comida c : todasLasComidas) {
+            if (c.getCategoria() != null && c.getCategoria().getAdicionales() != null) {
+                c.setAdicionalesDisponibles(new ArrayList<>(c.getCategoria().getAdicionales()));
+                comidaRepository.save(c);
+            }
+        }
+
         // 6. Crear domiciliarios oficiales del restaurante
         List<Domiciliario> domiciliarios = new ArrayList<>();
         domiciliarios.add(Domiciliario.builder().cedula("1010203040").nombre("Carlos Gómez").celular("+57 311 222 3333").disponible(true).build());

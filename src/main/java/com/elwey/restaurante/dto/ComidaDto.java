@@ -10,6 +10,10 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DTO para transferencia de datos de Comida hacia y desde el Frontend.
+ * Soporta aplanamiento de categoría y lista de adicionales con sus respectivos IDs.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,10 +40,22 @@ public class ComidaDto {
     @Builder.Default
     private List<Adicional> adicionales = new ArrayList<>();
 
+    @Builder.Default
+    private List<Long> adicionalesIds = new ArrayList<>();
+
     public static ComidaDto fromEntity(Comida comida) {
         if (comida == null) return null;
         Long catId = (comida.getCategoria() != null) ? comida.getCategoria().getId() : null;
         String catNombre = (comida.getCategoria() != null) ? comida.getCategoria().getNombre() : null;
+
+        List<Long> adicIds = new ArrayList<>();
+        if (comida.getAdicionalesDisponibles() != null) {
+            for (Adicional a : comida.getAdicionalesDisponibles()) {
+                if (a != null && a.getId() != null) {
+                    adicIds.add(a.getId());
+                }
+            }
+        }
 
         return ComidaDto.builder()
                 .id(comida.getId())
@@ -51,14 +67,23 @@ public class ComidaDto {
                 .activo(comida.getActivo())
                 .categoriaId(catId)
                 .categoriaNombre(catNombre)
-                .adicionales(null) // Para listas no anidamos adicionales a menos que se solicite
+                .adicionalesIds(adicIds)
+                .adicionales(null) // Para listas generales no anidamos el objeto completo para optimizar payload
                 .build();
     }
 
     public static ComidaDto fromEntityWithAdicionales(Comida comida, List<Adicional> adicionales) {
         ComidaDto dto = fromEntity(comida);
         if (dto != null) {
-            dto.setAdicionales(adicionales != null ? adicionales : new ArrayList<>());
+            List<Adicional> list = adicionales != null ? adicionales : new ArrayList<>();
+            dto.setAdicionales(list);
+            List<Long> ids = new ArrayList<>();
+            for (Adicional a : list) {
+                if (a != null && a.getId() != null) {
+                    ids.add(a.getId());
+                }
+            }
+            dto.setAdicionalesIds(ids);
         }
         return dto;
     }

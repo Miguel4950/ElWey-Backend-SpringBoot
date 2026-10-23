@@ -41,6 +41,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    @ExceptionHandler(OperadorNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleOperadorNotFound(OperadorNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", ex.getMessage()));
+    }
+
     @ExceptionHandler(ComidaEnUsoException.class)
     public ResponseEntity<Map<String, String>> handleComidaEnUso(ComidaEnUsoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", ex.getMessage()));

@@ -1,6 +1,7 @@
 package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.dto.CrearPedidoDto;
+import com.elwey.restaurante.dto.ItemPedidoDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Comida;
@@ -9,6 +10,7 @@ import com.elwey.restaurante.entities.ItemPedido;
 import com.elwey.restaurante.entities.ItemPedidoAdicional;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.ComidaNotFoundException;
+import com.elwey.restaurante.errors.DomiciliarioNotFoundException;
 import com.elwey.restaurante.errors.PedidoNotFoundException;
 import com.elwey.restaurante.repository.AdicionalRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
@@ -25,6 +27,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación de la capa de servicio para Pedido.
+ * Controla la lógica de compra, cálculo dinámico de subtotales y totales,
+ * el flujo de estados operativos y la asignación/liberación de domiciliarios.
+ */
 @Service
 public class PedidoServiceImpl implements PedidoService {
 
@@ -213,6 +220,66 @@ public class PedidoServiceImpl implements PedidoService {
 
         calcularTotales(pedido);
         return pedido;
+    }
+
+    @Override
+    @Transactional
+    public Pedido actualizarEstado(Long pedidoId, String nuevoEstado, Long domiciliarioId) {
+        Pedido pedido = searchById(pedidoId);
+
+        if (nuevoEstado != null && !nuevoEstado.isBlank()) {
+            pedido.setEstado(nuevoEstado.trim());
+        }
+
+        // Si se suministró un domiciliario, asociarlo al pedido
+        if (domiciliarioId != null) {
+            Domiciliario dom = domiciliarioRepository.findById(domiciliarioId)
+                    .orElseThrow(() -> new DomiciliarioNotFoundException(domiciliarioId));
+            pedido.setDomiciliario(dom);
+        }
+
+        // Reglas de negocio para cambios de estado:
+        if ("En camino".equalsIgnoreCase(pedido.getEstado()) || "Enviado".equalsIgnoreCase(pedido.getEstado())) {
+            // Si el pedido no tiene domiciliario aún, intentar asignarle uno disponible
+            if (pedido.getDomiciliario() == null) {
+                List<Domiciliario> disponibles = domiciliarioRepository.findByDisponible(true);
+                if (!disponibles.isEmpty()) {
+                    pedido.setDomiciliario(disponibles.get(0));
+                }
+            }
+            // Marcar al domiciliario asignado con disponible = false
+            if (pedido.getDomiciliario() != null) {
+                pedido.getDomiciliario().setDisponible(false);
+                domiciliarioRepository.save(pedido.getDomiciliario());
+            }
+        } else if ("Entregado".equalsIgnoreCase(pedido.getEstado())) {
+            // Registrar fecha de entrega al finalizar
+            pedido.setFechaEntrega(LocalDateTime.now());
+            // Liberar al domiciliario marcándolo con disponible = true
+            if (pedido.getDomiciliario() != null) {
+                pedido.getDomiciliario().setDisponible(true);
+                domiciliarioRepository.save(pedido.getDomiciliario());
+            }
+        }
+
+        calcularTotales(pedido);
+        return pedidoRepository.save(pedido);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId) {
+        Pedido pedido = searchById(pedidoId);
+        List<ItemPedidoDto> itemsDto = new ArrayList<>();
+        if (pedido.getItems() != null) {
+            for (ItemPedido item : pedido.getItems()) {
+                ItemPedidoDto dto = ItemPedidoDto.fromEntity(item);
+                if (dto != null) {
+                    itemsDto.add(dto);
+                }
+            }
+        }
+        return itemsDto;
     }
 
     @Override

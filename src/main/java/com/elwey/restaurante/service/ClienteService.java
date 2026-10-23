@@ -1,10 +1,11 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.dto.ClienteDto;
 import com.elwey.restaurante.entities.Cliente;
 import java.util.List;
 
 /**
- * Interfaz de la capa de Servicio de Negocio para Clientes.
+ * Interfaz de la capa de Servicio de Negocio para Clientes y Autenticación.
  */
 public interface ClienteService {
 
@@ -19,6 +20,10 @@ public interface ClienteService {
     Cliente obtenerPorEmail(String email);
 
     Cliente autenticar(String email, String password);
+
+    ClienteDto autenticarUsuario(String login, String password);
+
+    ClienteDto autenticarPorRol(String login, String password, String rolEsperado);
 
     Cliente guardar(Cliente cliente);
 

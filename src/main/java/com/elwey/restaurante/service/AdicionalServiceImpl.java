@@ -2,8 +2,10 @@ package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
+import com.elwey.restaurante.entities.Comida;
 import com.elwey.restaurante.errors.AdicionalNotFoundException;
 import com.elwey.restaurante.repository.AdicionalRepository;
+import com.elwey.restaurante.repository.ComidaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementación de la capa de servicio para Adicional.
+ * Proporciona lógica transaccional para CRUD y desvinculación segura en relaciones ManyToMany.
+ */
 @Service
 public class AdicionalServiceImpl implements AdicionalService {
 
@@ -20,20 +26,53 @@ public class AdicionalServiceImpl implements AdicionalService {
     @Autowired
     private CategoriaService categoriaService;
 
+    @Autowired
+    private ComidaRepository comidaRepository;
+
     @Override
-    public List<Adicional> searchAll() {
+    @Transactional(readOnly = true)
+    public List<Adicional> findAll() {
         return adicionalRepository.findAll();
     }
 
     @Override
-    public Adicional searchById(Long id) {
+    @Transactional(readOnly = true)
+    public List<Adicional> listarActivos() {
+        return adicionalRepository.findByActivoTrue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Adicional findById(Long id) {
         return adicionalRepository.findById(id)
                 .orElseThrow(() -> new AdicionalNotFoundException(id));
     }
 
     @Override
-    public List<Adicional> findByCategoria(Long categoriaId) {
+    @Transactional(readOnly = true)
+    public List<Adicional> findByComidaId(Long comidaId) {
+        List<Adicional> deComida = adicionalRepository.findByComidasId(comidaId);
+        if (deComida != null && !deComida.isEmpty()) {
+            return deComida;
+        }
+        // Respaldo: si aún no están asignados en la tabla directa, buscar los de su categoría
+        Comida comida = comidaRepository.findById(comidaId).orElse(null);
+        if (comida != null && comida.getCategoria() != null) {
+            return adicionalRepository.findByCategoriasId(comida.getCategoria().getId());
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Adicional> findByCategoriaId(Long categoriaId) {
         return adicionalRepository.findByCategoriasId(categoriaId);
+    }
+
+    @Override
+    @Transactional
+    public Adicional save(Adicional adicional) {
+        return adicionalRepository.save(adicional);
     }
 
     @Override
@@ -59,8 +98,26 @@ public class AdicionalServiceImpl implements AdicionalService {
 
     @Override
     @Transactional
+    public Adicional update(Long id, Adicional adicionalActualizado) {
+        Adicional existente = findById(id);
+        if (adicionalActualizado.getNombre() != null && !adicionalActualizado.getNombre().isBlank()) {
+            existente.setNombre(adicionalActualizado.getNombre().trim());
+        }
+        if (adicionalActualizado.getPrecio() != null) {
+            existente.setPrecio(adicionalActualizado.getPrecio());
+        }
+        if (adicionalActualizado.getActivo() != null) {
+            existente.setActivo(adicionalActualizado.getActivo());
+        }
+        return adicionalRepository.save(existente);
+    }
+
+    @Override
+    @Transactional
     public void delete(Long id) {
-        Adicional adicional = searchById(id);
+        Adicional adicional = findById(id);
+
+        // 1. Desvincular de las categorías dueñas de la relación ManyToMany (tabla categoria_adicional)
         if (adicional.getCategorias() != null) {
             for (Categoria c : adicional.getCategorias()) {
                 if (c.getAdicionales() != null) {
@@ -69,6 +126,18 @@ public class AdicionalServiceImpl implements AdicionalService {
             }
             adicional.getCategorias().clear();
         }
+
+        // 2. Desvincular de las comidas dueñas de la relación ManyToMany (tabla comida_adicional)
+        if (adicional.getComidas() != null) {
+            for (Comida c : adicional.getComidas()) {
+                if (c.getAdicionalesDisponibles() != null) {
+                    c.getAdicionalesDisponibles().remove(adicional);
+                }
+            }
+            adicional.getComidas().clear();
+        }
+
+        // 3. Eliminar físicamente el adicional sin violar restricciones de llave foránea
         adicionalRepository.delete(adicional);
     }
 }

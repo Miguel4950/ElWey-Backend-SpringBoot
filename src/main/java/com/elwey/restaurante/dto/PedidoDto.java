@@ -22,6 +22,7 @@ public class PedidoDto {
     private Long id;
     private String estado;
     private String fechaCreacion;
+    private String fechaEntrega;
 
     private Long clienteId;
     private String clienteNombre;
@@ -47,6 +48,10 @@ public class PedidoDto {
         String fechaStr = (pedido.getFechaCreacion() != null)
                 ? pedido.getFechaCreacion().format(FORMATTER)
                 : "";
+
+        String fechaEntregaStr = (pedido.getFechaEntrega() != null)
+                ? pedido.getFechaEntrega().format(FORMATTER)
+                : null;
 
         Long cliId = (pedido.getCliente() != null) ? pedido.getCliente().getId() : null;
         String cliNombre = "Cliente Invitado";
@@ -91,6 +96,7 @@ public class PedidoDto {
                 .id(pedido.getId())
                 .estado(pedido.getEstado())
                 .fechaCreacion(fechaStr)
+                .fechaEntrega(fechaEntregaStr)
                 .clienteId(cliId)
                 .clienteNombre(cliNombre)
                 .clienteCorreo(cliCorreo)

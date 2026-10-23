@@ -1,8 +1,12 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Comida;
 import java.util.List;
 
+/**
+ * Interfaz de la capa de servicio para la gestión de Comidas y sus Adicionales Disponibles.
+ */
 public interface ComidaService {
 
     // Operaciones principales del servicio de comidas
@@ -13,6 +17,10 @@ public interface ComidaService {
     Comida searchById(Long id);
 
     void save(Comida comida, Long categoriaId);
+
+    void save(Comida comida, Long categoriaId, List<Long> adicionalesIds);
+
+    List<Adicional> obtenerAdicionalesDisponibles(Long comidaId);
 
     void deleteById(Long id);
 

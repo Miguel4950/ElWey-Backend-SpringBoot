@@ -1,5 +1,6 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.dto.ClienteDto;
 import com.elwey.restaurante.entities.Administrador;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Operador;
@@ -10,14 +11,18 @@ import com.elwey.restaurante.repository.AdministradorRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
 import com.elwey.restaurante.repository.OperadorRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Implementación del servicio de negocio para Clientes y Autenticación Multi-Rol.
+ * Valida credenciales contra las tablas Cliente, Operador y Administrador.
+ */
+@Slf4j
 @Service
 public class ClienteServiceImpl implements ClienteService {
 
@@ -25,20 +30,18 @@ public class ClienteServiceImpl implements ClienteService {
     private ClienteRepository repo;
 
     @Autowired
-    private PedidoRepository pedidoRepo;
-
-    @Autowired
     private OperadorRepository operadorRepo;
 
     @Autowired
     private AdministradorRepository administradorRepo;
 
-    Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);
+    @Autowired
+    private PedidoRepository pedidoRepo;
 
     @Override
     @Transactional(readOnly = true)
     public List<Cliente> listarTodos() {
-        log.info("Listando todos los clientes desde el servicio");
+        log.info("Listando todos los clientes registrados");
         return repo.findAll();
     }
 
@@ -53,7 +56,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional(readOnly = true)
     public Cliente obtenerPorEmail(String email) {
-        log.info("Buscando cliente con email: " + email);
+        log.info("Buscando cliente con email: {}", email);
         if (email == null) {
             return null;
         }
@@ -62,69 +65,92 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     @Transactional(readOnly = true)
-    public Cliente autenticar(String email, String password) {
-        log.info("Autenticando cliente con email: {}", email);
+    public ClienteDto autenticarUsuario(String login, String password) {
+        log.info("Autenticando usuario (3 roles) para login: {}", login);
 
-        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Debe proporcionar correo y contraseña.");
+        if (login == null || login.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar usuario/correo y contraseña.");
         }
 
-        Cliente cliente = obtenerPorEmail(email.trim());
+        String limpio = login.trim().toLowerCase();
+
+        // 1. Verificar en tabla Administrador (por usuario o email)
+        Administrador adm = administradorRepo.findByUsuario(limpio).orElse(null);
+        if (adm != null && password.equals(adm.getContrasena())) {
+            return ClienteDto.fromAdministrador(adm);
+        }
+
+        // 2. Verificar en tabla Operador (por usuario o email)
+        Operador op = operadorRepo.findByUsuario(limpio).orElse(null);
+        if (op != null && password.equals(op.getContrasena())) {
+            return ClienteDto.fromOperador(op);
+        }
+
+        // 3. Verificar en tabla Cliente (por email)
+        Cliente cliente = repo.findByEmail(limpio).orElse(null);
+        if (cliente != null && password.equals(cliente.getPassword())) {
+            if (!Boolean.TRUE.equals(cliente.getActivo())) {
+                throw new IllegalStateException("La cuenta de usuario se encuentra inactiva.");
+            }
+            return ClienteDto.fromCliente(cliente);
+        }
+
+        // 4. Intentar resolver por usuario en Cliente si coincide nombre o correo parcial
         if (cliente == null) {
-            Operador op = operadorRepo.findByUsuario(email.trim()).orElse(null);
-            if (op != null && password.equals(op.getContrasena())) {
-                Cliente opCliente = obtenerPorEmail("operador@elwey.com");
-                if (opCliente != null) {
-                    return opCliente;
+            List<Cliente> todos = repo.findAll();
+            for (Cliente c : todos) {
+                if (c.getEmail() != null && c.getEmail().toLowerCase().startsWith(limpio + "@") && password.equals(c.getPassword())) {
+                    if (!Boolean.TRUE.equals(c.getActivo())) {
+                        throw new IllegalStateException("La cuenta de usuario se encuentra inactiva.");
+                    }
+                    return ClienteDto.fromCliente(c);
                 }
-                return Cliente.builder()
-                        .id(op.getId())
-                        .nombre(op.getNombre())
-                        .email("operador@elwey.com")
-                        .telefono("+57 300 000 0002")
-                        .direccion("Sede Cocina y Despachos, Bogotá")
-                        .activo(true)
-                        .build();
-            }
-
-            Administrador adm = administradorRepo.findByUsuario(email.trim()).orElse(null);
-            if (adm != null && password.equals(adm.getContrasena())) {
-                Cliente adminCliente = obtenerPorEmail("admin@elwey.com");
-                if (adminCliente != null) {
-                    return adminCliente;
-                }
-                return Cliente.builder()
-                        .id(adm.getId())
-                        .nombre("Administrador")
-                        .email("admin@elwey.com")
-                        .telefono("+57 300 000 0001")
-                        .direccion("Sede Administrativa El Wey, Bogotá")
-                        .activo(true)
-                        .build();
             }
         }
 
-        if (cliente == null || !password.equals(cliente.getPassword())) {
-            throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu correo y contraseña.");
-        }
+        throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu correo o usuario y contraseña.");
+    }
 
-        if (!cliente.getActivo()) {
-            throw new IllegalStateException("La cuenta de usuario se encuentra inactiva.");
+    @Override
+    @Transactional(readOnly = true)
+    public ClienteDto autenticarPorRol(String login, String password, String rolEsperado) {
+        ClienteDto dto = autenticarUsuario(login, password);
+        if (rolEsperado != null && !rolEsperado.isBlank()) {
+            if (!rolEsperado.equalsIgnoreCase(dto.getRol())) {
+                throw new CredencialesInvalidasException("Las credenciales ingresadas no corresponden a un usuario con rol " + rolEsperado.toUpperCase());
+            }
         }
+        return dto;
+    }
 
-        return cliente;
+    @Override
+    @Transactional(readOnly = true)
+    public Cliente autenticar(String email, String password) {
+        ClienteDto dto = autenticarUsuario(email, password);
+        Cliente cliente = obtenerPorEmail(dto.getCorreo());
+        if (cliente != null) {
+            return cliente;
+        }
+        return Cliente.builder()
+                .id(dto.getId())
+                .nombre(dto.getNombre())
+                .email(dto.getCorreo())
+                .telefono(dto.getTelefono())
+                .direccion(dto.getDireccion())
+                .activo(dto.getActivo())
+                .build();
     }
 
     @Override
     @Transactional
     public Cliente guardar(Cliente cliente) {
-        log.info("Guardando o actualizando cliente: " + (cliente != null ? cliente.getNombre() : "null"));
+        log.info("Guardando cliente: {}", (cliente != null ? cliente.getNombre() : "null"));
         if (cliente == null || cliente.getEmail() == null || cliente.getEmail().isBlank()) {
             throw new IllegalArgumentException("El correo no es válido.");
         }
         Cliente existente = obtenerPorEmail(cliente.getEmail());
         if (existente != null) {
-            throw new IllegalArgumentException("El correo ya esta en uso.");
+            throw new IllegalArgumentException("El correo ya está en uso.");
         }
         if (cliente.getFechaRegistro() == null || cliente.getFechaRegistro().isBlank()) {
             cliente.setFechaRegistro(java.time.LocalDate.now().toString());
@@ -145,9 +171,9 @@ public class ClienteServiceImpl implements ClienteService {
         if (datosModificados.getNombre() != null && !datosModificados.getNombre().isBlank()) {
             actual.setNombre(datosModificados.getNombre().trim());
         }
-        /*if (datosModificados.getApellido() != null) {
+        if (datosModificados.getApellido() != null && !datosModificados.getApellido().isBlank()) {
             actual.setApellido(datosModificados.getApellido().trim());
-        }*/
+        }
         if (datosModificados.getTelefono() != null) {
             actual.setTelefono(datosModificados.getTelefono().trim());
         }
