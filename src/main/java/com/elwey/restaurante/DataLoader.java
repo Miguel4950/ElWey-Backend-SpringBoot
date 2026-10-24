@@ -228,8 +228,12 @@ public class DataLoader implements CommandLineRunner {
 
         // 3. Crear 10 Clientes (Jugadores de fútbol famosos con emails únicos)
         String[] nombresClientes = {
-                "Lionel Messi", "Cristiano Ronaldo", "Radamel Falcao", "James Rodríguez", "Luis Díaz",
-                "Neymar Jr", "Kylian Mbappé", "Luka Modrić", "Erling Haaland", "Zinedine Zidane"
+                "Lionel", "Cristiano", "Radamel", "James", "Luis",
+                "Neymar", "Kylian", "Luka", "Erling", "Zinedine"
+        };
+        String[] apellidosClientes = {
+                "Messi", "Ronaldo", "Falcao", "Rodríguez", "Díaz",
+                "Jr", "Mbappé", "Modrić", "Haaland", "Zidane"
         };
         String[] emailsClientes = {
                 "lionel.messi@email.com", "cristiano.ronaldo@email.com", "falcao.garcia@email.com", "james.rodriguez@email.com", "luis.diaz@email.com",
@@ -251,6 +255,7 @@ public class DataLoader implements CommandLineRunner {
         for (int i = 0; i < 10; i++) {
             Cliente cliente = Cliente.builder()
                     .nombre(nombresClientes[i])
+                    .apellido(apellidosClientes[i])
                     .email(emailsClientes[i])
                     .password(passwords[i])
                     .telefono(telefonos[i])
@@ -262,7 +267,8 @@ public class DataLoader implements CommandLineRunner {
 
         // 4. Crear cuentas oficiales de Admin y Operador
         Cliente admin = Cliente.builder()
-                .nombre("Administrador El Wey")
+                .nombre("Administrador")
+                .apellido("El Wey")
                 .email("admin@elwey.com")
                 .password("admin123")
                 .telefono("+57 300 000 0001")
@@ -272,7 +278,8 @@ public class DataLoader implements CommandLineRunner {
         clienteRepository.save(admin);
 
         Cliente operador = Cliente.builder()
-                .nombre("Operador de Cocina")
+                .nombre("Operador")
+                .apellido("de Cocina")
                 .email("operador@elwey.com")
                 .password("operador123")
                 .telefono("+57 300 000 0002")
