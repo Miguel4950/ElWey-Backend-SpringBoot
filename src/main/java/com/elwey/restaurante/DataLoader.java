@@ -501,7 +501,7 @@ public class DataLoader implements CommandLineRunner {
                 Pedido ped4 = Pedido.builder()
                                 .cliente(james)
                                 .domiciliario(null)
-                                .estado("Recibido")
+                                .estado("Cocinando")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(15))
                                 .build();
                 ped4 = pedidoRepository.save(ped4);

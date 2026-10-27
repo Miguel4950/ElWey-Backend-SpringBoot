@@ -100,7 +100,8 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = Pedido.builder()
                 .cliente(cliente)
-                .estado("En preparación")
+                .domiciliario(null)
+                .estado("Cocinando")
                 .fechaCreacion(LocalDateTime.now())
                 .items(new ArrayList<>())
                 .build();
@@ -159,7 +160,9 @@ public class PedidoServiceImpl implements PedidoService {
             pedido.setDomiciliario(dom);
         }
 
-        if ("En camino".equalsIgnoreCase(pedido.getEstado()) || "Enviado".equalsIgnoreCase(pedido.getEstado())) {
+        if ("Enviado".equalsIgnoreCase(pedido.getEstado())
+                || "Enviando".equalsIgnoreCase(pedido.getEstado())
+                || "En camino".equalsIgnoreCase(pedido.getEstado())) {
             if (pedido.getDomiciliario() == null) {
                 List<Domiciliario> disponibles = domiciliarioRepository.findByDisponible(true);
                 if (!disponibles.isEmpty()) {

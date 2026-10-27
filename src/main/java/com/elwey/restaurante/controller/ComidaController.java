@@ -36,7 +36,7 @@ public class ComidaController {
     private static final Logger log = LoggerFactory.getLogger(ComidaController.class);
 
     @Operation(summary = "Listar todas las comidas registradas")
-    @GetMapping({ "", "/", "/all", "/tabla", "/tarjetas" })
+    @GetMapping({ "", "/", "/all" })
     public ResponseEntity<List<ComidaDto>> listarTodos() {
         log.info("Petición REST: consultar todas las comidas");
         List<ComidaDto> dtos = service.listarTodos().stream()
@@ -45,8 +45,8 @@ public class ComidaController {
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(summary = "Listar comidas activas para el menú digital")
-    @GetMapping({ "/activos", "/activas" })
+    @Operation(summary = "Listar comidas activas para el menú digital y tabla")
+    @GetMapping({ "/activos", "/activas", "/tabla", "/tarjetas" })
     public ResponseEntity<List<ComidaDto>> verComidasActivas() {
         log.info("Petición REST: consultar comidas activas desde base de datos");
         List<ComidaDto> dtos = service.listarActivas().stream()
