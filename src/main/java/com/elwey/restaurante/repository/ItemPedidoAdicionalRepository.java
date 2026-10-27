@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ItemPedidoAdicionalRepository extends JpaRepository<ItemPedidoAdicional, Long> {
+    boolean existsByAdicionalId(Long adicionalId);
 }

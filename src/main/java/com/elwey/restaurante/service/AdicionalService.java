@@ -11,29 +11,15 @@ public interface AdicionalService {
 
     List<Adicional> findAll();
 
-    default List<Adicional> searchAll() {
-        return findAll();
-    }
-
     List<Adicional> listarActivos();
 
     Adicional findById(Long id);
-
-    default Adicional searchById(Long id) {
-        return findById(id);
-    }
 
     List<Adicional> findByComidaId(Long comidaId);
 
     List<Adicional> findByCategoriaId(Long categoriaId);
 
-    default List<Adicional> findByCategoria(Long categoriaId) {
-        return findByCategoriaId(categoriaId);
-    }
-
-    Adicional save(Adicional adicional);
-
-    void save(Adicional adicional, Long categoriaId);
+    Adicional save(Adicional adicional, Long categoriaId);
 
     Adicional update(Long id, Adicional adicional);
 

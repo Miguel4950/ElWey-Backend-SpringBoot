@@ -51,6 +51,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", ex.getMessage()));
     }
 
+    @ExceptionHandler(AdicionalEnUsoException.class)
+    public ResponseEntity<Map<String, String>> handleAdicionalEnUso(AdicionalEnUsoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", ex.getMessage()));
+    }
+
     @ExceptionHandler(ClienteConPedidosException.class)
     public ResponseEntity<Map<String, String>> handleClienteConPedidos(ClienteConPedidosException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", ex.getMessage()));

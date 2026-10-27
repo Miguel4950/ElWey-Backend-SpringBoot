@@ -3,9 +3,11 @@ package com.elwey.restaurante.service;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
+import com.elwey.restaurante.errors.AdicionalEnUsoException;
 import com.elwey.restaurante.errors.AdicionalNotFoundException;
 import com.elwey.restaurante.repository.AdicionalRepository;
 import com.elwey.restaurante.repository.ComidaRepository;
+import com.elwey.restaurante.repository.ItemPedidoAdicionalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,9 @@ public class AdicionalServiceImpl implements AdicionalService {
 
     @Autowired
     private ComidaRepository comidaRepository;
+
+    @Autowired
+    private ItemPedidoAdicionalRepository itemPedidoAdicionalRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,13 +71,7 @@ public class AdicionalServiceImpl implements AdicionalService {
 
     @Override
     @Transactional
-    public Adicional save(Adicional adicional) {
-        return adicionalRepository.save(adicional);
-    }
-
-    @Override
-    @Transactional
-    public void save(Adicional adicional, Long categoriaId) {
+    public Adicional save(Adicional adicional, Long categoriaId) {
         if (categoriaId != null) {
             Categoria categoria = categoriaService.searchById(categoriaId);
             if (adicional.getCategorias() == null) {
@@ -88,7 +87,7 @@ public class AdicionalServiceImpl implements AdicionalService {
                 categoria.getAdicionales().add(adicional);
             }
         }
-        adicionalRepository.save(adicional);
+        return adicionalRepository.save(adicional);
     }
 
     @Override
@@ -111,6 +110,10 @@ public class AdicionalServiceImpl implements AdicionalService {
     @Transactional
     public void delete(Long id) {
         Adicional adicional = findById(id);
+
+        if (itemPedidoAdicionalRepository.existsByAdicionalId(id)) {
+            throw new AdicionalEnUsoException(id, adicional.getNombre());
+        }
 
         // Desvincular de las categorías dueñas de la relación ManyToMany (tabla categoria_adicional)
         if (adicional.getCategorias() != null) {

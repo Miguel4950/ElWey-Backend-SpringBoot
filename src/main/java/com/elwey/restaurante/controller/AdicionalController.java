@@ -65,11 +65,7 @@ public class AdicionalController {
         Long catId = (categoriaId != null) ? categoriaId : dto.getCategoriaId();
         log.info("Petición REST: crear adicional: {} con categoría opcional ID: {}", dto.getNombre(), catId);
         Adicional adicional = dto.toEntity();
-        if (catId != null) {
-            adicionalService.save(adicional, catId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(AdicionalDto.fromEntity(adicional));
-        }
-        Adicional nuevo = adicionalService.save(adicional);
+        Adicional nuevo = adicionalService.save(adicional, catId);
         return ResponseEntity.status(HttpStatus.CREATED).body(AdicionalDto.fromEntity(nuevo));
     }
 
