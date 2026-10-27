@@ -30,7 +30,8 @@ import java.util.List;
 
 /**
  * Implementación de la capa de servicio para Pedido.
- * Controla la creación de órdenes, el cálculo de subtotales y totales en el servicio,
+ * Controla la creación de órdenes, el cálculo de subtotales y totales en el
+ * servicio,
  * el flujo de estados operativos y la asignación/liberación de domiciliarios.
  */
 @Service
@@ -97,12 +98,8 @@ public class PedidoServiceImpl implements PedidoService {
         Cliente cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new ClienteNotFoundException(dto.getClienteId()));
 
-        List<Domiciliario> domiciliarios = domiciliarioRepository.findByDisponible(true);
-        Domiciliario domiciliario = domiciliarios.isEmpty() ? null : domiciliarios.get(0);
-
         Pedido pedido = Pedido.builder()
                 .cliente(cliente)
-                .domiciliario(domiciliario)
                 .estado("En preparación")
                 .fechaCreacion(LocalDateTime.now())
                 .items(new ArrayList<>())
@@ -125,7 +122,8 @@ public class PedidoServiceImpl implements PedidoService {
 
                 if (itemReq.getAdicionales() != null) {
                     for (CrearPedidoDto.AdicionalCantidadDto adicReq : itemReq.getAdicionales()) {
-                        if (adicReq.getAdicionalId() != null && adicReq.getCantidad() != null && adicReq.getCantidad() > 0) {
+                        if (adicReq.getAdicionalId() != null && adicReq.getCantidad() != null
+                                && adicReq.getCantidad() > 0) {
                             Adicional adicional = adicionalRepository.findById(adicReq.getAdicionalId()).orElse(null);
                             if (adicional != null) {
                                 ItemPedidoAdicional relacion = ItemPedidoAdicional.builder()
@@ -194,7 +192,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Double calcularSubtotal(ItemPedido item) {
-        if (item == null) return 0.0;
+        if (item == null)
+            return 0.0;
 
         double precioComida = (item.getComida() != null && item.getComida().getPrecio() != null)
                 ? item.getComida().getPrecio()
@@ -228,7 +227,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public Double calcularTotal(Pedido pedido) {
-        if (pedido == null || pedido.getItems() == null) return 0.0;
+        if (pedido == null || pedido.getItems() == null)
+            return 0.0;
         double total = 0.0;
         for (ItemPedido item : pedido.getItems()) {
             total += calcularSubtotal(item);
@@ -238,7 +238,8 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public void calcularTotales(Pedido pedido) {
-        if (pedido == null) return;
+        if (pedido == null)
+            return;
 
         int totalProductos = 0;
         int totalAdicionales = 0;
