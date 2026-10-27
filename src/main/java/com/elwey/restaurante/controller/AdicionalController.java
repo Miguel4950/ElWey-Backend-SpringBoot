@@ -1,5 +1,6 @@
 package com.elwey.restaurante.controller;
 
+import com.elwey.restaurante.dto.AdicionalDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.service.AdicionalService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,10 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Controlador REST para la gestión de Adicionales (extras e ingredientes).
- * Expone endpoints para el CRUD completo y filtrado por comida.
+ * Expone endpoints para el CRUD completo y filtrado por comida utilizando AdicionalDto.
  */
 @Tag(name = "Adicionales", description = "Endpoints para la gestión y consulta de adicionales e ingredientes extra")
 @RestController
@@ -30,47 +32,55 @@ public class AdicionalController {
 
     @Operation(summary = "Listar todos los adicionales registrados")
     @GetMapping({ "", "/" })
-    public ResponseEntity<List<Adicional>> listarTodos() {
+    public ResponseEntity<List<AdicionalDto>> listarTodos() {
         log.info("Petición REST: listar todos los adicionales");
-        return ResponseEntity.ok(adicionalService.findAll());
+        List<AdicionalDto> dtos = adicionalService.findAll().stream()
+                .map(AdicionalDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @Operation(summary = "Obtener un adicional por su ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Adicional> obtenerPorId(@PathVariable("id") Long id) {
+    public ResponseEntity<AdicionalDto> obtenerPorId(@PathVariable("id") Long id) {
         log.info("Petición REST: obtener adicional con ID: {}", id);
-        return ResponseEntity.ok(adicionalService.findById(id));
+        return ResponseEntity.ok(AdicionalDto.fromEntity(adicionalService.findById(id)));
     }
 
     @Operation(summary = "Listar los adicionales disponibles para una comida específica")
     @GetMapping("/comida/{comidaId}")
-    public ResponseEntity<List<Adicional>> listarPorComida(@PathVariable("comidaId") Long comidaId) {
+    public ResponseEntity<List<AdicionalDto>> listarPorComida(@PathVariable("comidaId") Long comidaId) {
         log.info("Petición REST: listar adicionales para la comida ID: {}", comidaId);
-        return ResponseEntity.ok(adicionalService.findByComidaId(comidaId));
+        List<AdicionalDto> dtos = adicionalService.findByComidaId(comidaId).stream()
+                .map(AdicionalDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @Operation(summary = "Crear un nuevo adicional en el sistema")
     @PostMapping({ "", "/" })
-    public ResponseEntity<Adicional> crearAdicional(
-            @RequestBody Adicional adicional,
+    public ResponseEntity<AdicionalDto> crearAdicional(
+            @RequestBody AdicionalDto dto,
             @RequestParam(name = "categoriaId", required = false) Long categoriaId) {
-        log.info("Petición REST: crear adicional: {} con categoría opcional ID: {}", adicional.getNombre(), categoriaId);
-        if (categoriaId != null) {
-            adicionalService.save(adicional, categoriaId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(adicional);
+        Long catId = (categoriaId != null) ? categoriaId : dto.getCategoriaId();
+        log.info("Petición REST: crear adicional: {} con categoría opcional ID: {}", dto.getNombre(), catId);
+        Adicional adicional = dto.toEntity();
+        if (catId != null) {
+            adicionalService.save(adicional, catId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(AdicionalDto.fromEntity(adicional));
         }
         Adicional nuevo = adicionalService.save(adicional);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AdicionalDto.fromEntity(nuevo));
     }
 
     @Operation(summary = "Actualizar información de un adicional existente")
     @PutMapping("/{id}")
-    public ResponseEntity<Adicional> actualizarAdicional(
+    public ResponseEntity<AdicionalDto> actualizarAdicional(
             @PathVariable("id") Long id,
-            @RequestBody Adicional adicional) {
+            @RequestBody AdicionalDto dto) {
         log.info("Petición REST: actualizar adicional con ID: {}", id);
-        Adicional actualizado = adicionalService.update(id, adicional);
-        return ResponseEntity.ok(actualizado);
+        Adicional actualizado = adicionalService.update(id, dto.toEntity());
+        return ResponseEntity.ok(AdicionalDto.fromEntity(actualizado));
     }
 
     @Operation(summary = "Eliminar de forma segura un adicional desvinculándolo de sus relaciones")
