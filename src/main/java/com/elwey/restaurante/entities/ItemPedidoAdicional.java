@@ -22,6 +22,9 @@ public class ItemPedidoAdicional {
     @Column(nullable = false)
     private Integer cantidad;
 
+    @Transient
+    private Double subtotal;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "id_item", nullable = false)
@@ -31,7 +34,6 @@ public class ItemPedidoAdicional {
     @JoinColumn(name = "id_adicional", nullable = false)
     private Adicional adicional;
 
-    // Métodos de compatibilidad con las vistas de plantillas
     public String getNombre() {
         return this.adicional != null ? this.adicional.getNombre() : "";
     }

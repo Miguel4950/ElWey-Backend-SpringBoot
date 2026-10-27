@@ -3,7 +3,6 @@ package com.elwey.restaurante.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -14,18 +13,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CrearPedidoDto {
 
-    private Long comidaId;
-
-    @Builder.Default
-    private Integer cantidad = 1;
-
-    @Builder.Default
-    private List<AdicionalCantidadDto> adicionales = new ArrayList<>();
-
     private Long clienteId;
-
-    @Builder.Default
-    private List<ItemPedidoRequestDto> items = new ArrayList<>();
+    private List<ItemPedidoRequestDto> items;
 
     @Getter
     @Setter
@@ -34,12 +23,8 @@ public class CrearPedidoDto {
     @Builder
     public static class ItemPedidoRequestDto {
         private Long comidaId;
-
-        @Builder.Default
-        private Integer cantidad = 1;
-
-        @Builder.Default
-        private List<AdicionalCantidadDto> adicionales = new ArrayList<>();
+        private Integer cantidad;
+        private List<AdicionalCantidadDto> adicionales;
     }
 
     @Getter

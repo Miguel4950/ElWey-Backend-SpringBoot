@@ -39,8 +39,7 @@ public class PedidoDto {
     private Double subtotalAdicionales;
     private Double total;
 
-    @Builder.Default
-    private List<ItemPedidoDto> items = new ArrayList<>();
+    private List<ItemPedidoDto> items;
 
     public static PedidoDto fromEntity(Pedido pedido) {
         if (pedido == null) return null;
@@ -72,25 +71,14 @@ public class PedidoDto {
         String domCelular = (pedido.getDomiciliario() != null) ? pedido.getDomiciliario().getCelular() : null;
 
         List<ItemPedidoDto> itemsDto = new ArrayList<>();
-        int totalProductos = 0;
-        int totalAdicionales = 0;
-        double subComida = 0.0;
-        double subAdicionales = 0.0;
-
         if (pedido.getItems() != null) {
             for (ItemPedido item : pedido.getItems()) {
                 ItemPedidoDto itemDto = ItemPedidoDto.fromEntity(item);
                 if (itemDto != null) {
                     itemsDto.add(itemDto);
-                    totalProductos += (itemDto.getCantidad() != null) ? itemDto.getCantidad() : 0;
-                    totalAdicionales += (itemDto.getCantidadAdicionales() != null) ? itemDto.getCantidadAdicionales() : 0;
-                    subComida += (itemDto.getSubtotalComida() != null) ? itemDto.getSubtotalComida() : 0.0;
-                    subAdicionales += (itemDto.getSubtotalAdicionales() != null) ? itemDto.getSubtotalAdicionales() : 0.0;
                 }
             }
         }
-
-        double totalCalculado = subComida + subAdicionales;
 
         return PedidoDto.builder()
                 .id(pedido.getId())
@@ -104,11 +92,11 @@ public class PedidoDto {
                 .clienteDireccion(cliDireccion)
                 .domiciliarioNombre(domNombre)
                 .domiciliarioCelular(domCelular)
-                .cantidadTotalProductos(totalProductos)
-                .cantidadTotalAdicionales(totalAdicionales)
-                .subtotalComida(subComida)
-                .subtotalAdicionales(subAdicionales)
-                .total(totalCalculado)
+                .cantidadTotalProductos(pedido.getCantidadTotalProductos())
+                .cantidadTotalAdicionales(pedido.getCantidadTotalAdicionales())
+                .subtotalComida(pedido.getSubtotalComida())
+                .subtotalAdicionales(pedido.getSubtotalAdicionales())
+                .total(pedido.getTotal())
                 .items(itemsDto)
                 .build();
     }

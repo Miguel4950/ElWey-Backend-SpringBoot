@@ -27,9 +27,7 @@ public class ItemPedidoDto {
     private Double subtotalComida;
     private Double subtotalAdicionales;
     private Double subtotal;
-
-    @Builder.Default
-    private List<AdicionalSeleccionadoDto> adicionales = new ArrayList<>();
+    private List<AdicionalSeleccionadoDto> adicionales;
 
     @Getter
     @Setter
@@ -52,40 +50,23 @@ public class ItemPedidoDto {
         String catNombre = (item.getComida() != null && item.getComida().getCategoria() != null)
                 ? item.getComida().getCategoria().getNombre()
                 : "General";
-        double cPrecio = (item.getComida() != null && item.getComida().getPrecio() != null)
-                ? item.getComida().getPrecio()
-                : 0.0;
+        Double cPrecio = (item.getComida() != null) ? item.getComida().getPrecio() : 0.0;
 
-        int cantProducto = (item.getCantidad() != null && item.getCantidad() > 0) ? item.getCantidad() : 1;
-        double subComida = cPrecio * cantProducto;
-
-        double subAdicionales = 0.0;
-        int cantAdicionales = 0;
         List<AdicionalSeleccionadoDto> adicionalesDto = new ArrayList<>();
-
         if (item.getAdicionales() != null) {
             for (ItemPedidoAdicional ipa : item.getAdicionales()) {
                 if (ipa != null && ipa.getAdicional() != null) {
                     Adicional a = ipa.getAdicional();
-                    double precioAdic = (a.getPrecio() != null) ? a.getPrecio() : 0.0;
-                    int cantAdic = (ipa.getCantidad() != null && ipa.getCantidad() > 0) ? ipa.getCantidad() : 1;
-                    double subAdic = precioAdic * cantAdic;
-
-                    subAdicionales += subAdic;
-                    cantAdicionales += cantAdic;
-
                     adicionalesDto.add(AdicionalSeleccionadoDto.builder()
                             .id(a.getId())
                             .nombre(a.getNombre())
-                            .precio(precioAdic)
-                            .cantidad(cantAdic)
-                            .subtotal(subAdic)
+                            .precio(a.getPrecio())
+                            .cantidad(ipa.getCantidad())
+                            .subtotal(ipa.getSubtotal())
                             .build());
                 }
             }
         }
-
-        double subTotalItem = subComida + subAdicionales;
 
         return ItemPedidoDto.builder()
                 .id(item.getId())
@@ -93,11 +74,11 @@ public class ItemPedidoDto {
                 .comidaNombre(cNombre)
                 .categoriaNombre(catNombre)
                 .comidaPrecio(cPrecio)
-                .cantidad(cantProducto)
-                .cantidadAdicionales(cantAdicionales)
-                .subtotalComida(subComida)
-                .subtotalAdicionales(subAdicionales)
-                .subtotal(subTotalItem)
+                .cantidad(item.getCantidad())
+                .cantidadAdicionales(item.getCantidadAdicionales())
+                .subtotalComida(item.getSubtotalComida())
+                .subtotalAdicionales(item.getSubtotalAdicionales())
+                .subtotal(item.getSubtotal())
                 .adicionales(adicionalesDto)
                 .build();
     }

@@ -31,6 +31,18 @@ public class Pedido {
     private LocalDateTime fechaEntrega;
 
     @Transient
+    private Integer cantidadTotalProductos;
+
+    @Transient
+    private Integer cantidadTotalAdicionales;
+
+    @Transient
+    private Double subtotalComida;
+
+    @Transient
+    private Double subtotalAdicionales;
+
+    @Transient
     private Double total;
 
     @ManyToOne

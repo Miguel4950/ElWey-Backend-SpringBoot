@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Interfaz de la capa de servicio para Pedidos.
- * Administra el ciclo de vida, cálculo de totales, flujo de estados y consultas encadenadas de ítems.
+ * Administra el ciclo de vida, cálculo de subtotales y totales, flujo de estados y consulta de ítems.
  */
 public interface PedidoService {
 
@@ -18,17 +18,13 @@ public interface PedidoService {
 
     List<Pedido> findByCliente(Long clienteId);
 
-    void save(Pedido pedido);
-
-    void delete(Long id);
-
-    void crearPedidoRapido(Long comidaId, List<Long> adicionalesIds);
+    List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId);
 
     Pedido crearPedido(CrearPedidoDto dto);
 
     Pedido actualizarEstado(Long pedidoId, String nuevoEstado, Long domiciliarioId);
 
-    List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId);
+    void delete(Long id);
 
     Double calcularSubtotal(ItemPedido item);
 

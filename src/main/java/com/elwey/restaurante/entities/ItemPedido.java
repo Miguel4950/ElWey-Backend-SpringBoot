@@ -27,6 +27,15 @@ public class ItemPedido {
     private Integer cantidad;
 
     @Transient
+    private Integer cantidadAdicionales;
+
+    @Transient
+    private Double subtotalComida;
+
+    @Transient
+    private Double subtotalAdicionales;
+
+    @Transient
     private Double subtotal;
 
     @JsonIgnore

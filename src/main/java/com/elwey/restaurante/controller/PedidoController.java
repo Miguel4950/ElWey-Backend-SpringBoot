@@ -16,15 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Controlador REST para la gestión integral de Pedidos.
- * Incluye registro (carrito/unitario), consulta, listado de ítems y actualización de estados con control de domiciliarios.
+ * Controlador REST para la gestión de Pedidos.
  */
 @Tag(name = "Pedidos", description = "Endpoints para la gestión, ordenamiento, monitoreo y cambio de estado de pedidos")
 @RestController
-@RequestMapping({ "/pedidos", "/pedido" })
+@RequestMapping("/pedidos")
 @CrossOrigin(origins = "http://localhost:4200")
 public class PedidoController {
 
@@ -34,17 +32,17 @@ public class PedidoController {
     private static final Logger log = LoggerFactory.getLogger(PedidoController.class);
 
     @Operation(summary = "Listar todos los pedidos registrados en el restaurante")
-    @GetMapping({ "", "/", "/all" })
+    @GetMapping
     public ResponseEntity<List<PedidoDto>> mostrarPedidos() {
         log.info("Petición REST: consultando lista completa de pedidos");
         List<PedidoDto> dtos = pedidoService.searchAll().stream()
                 .map(PedidoDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
     @Operation(summary = "Obtener el detalle consolidado de un pedido por su ID")
-    @GetMapping({ "/{id}", "/find/{id}" })
+    @GetMapping("/{id}")
     public ResponseEntity<PedidoDto> mostrarPedidoPorId(@PathVariable("id") Long id) {
         log.info("Petición REST: consultando detalle de pedido con ID: {}", id);
         Pedido pedido = pedidoService.searchById(id);
@@ -57,7 +55,7 @@ public class PedidoController {
         log.info("Petición REST: consultando pedidos para cliente ID: {}", clienteId);
         List<PedidoDto> dtos = pedidoService.findByCliente(clienteId).stream()
                 .map(PedidoDto::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -68,37 +66,31 @@ public class PedidoController {
         return ResponseEntity.ok(pedidoService.obtenerItemsPedido(id));
     }
 
-    @Operation(summary = "Actualizar el estado del pedido ('En preparación', 'En camino', 'Entregado') y gestionar domiciliario")
+    @Operation(summary = "Actualizar el estado del pedido y gestionar domiciliario")
     @PutMapping("/{id}/estado")
     public ResponseEntity<PedidoDto> actualizarEstadoPedido(
             @PathVariable("id") Long id,
-            @RequestBody(required = false) ActualizarEstadoPedidoDto dto,
-            @RequestParam(name = "estado", required = false) String estadoParam,
-            @RequestParam(name = "domiciliarioId", required = false) Long domiciliarioIdParam) {
-
-        String estadoFinal = (dto != null && dto.getEstado() != null) ? dto.getEstado() : estadoParam;
-        Long domiciliarioFinal = (dto != null && dto.getDomiciliarioId() != null) ? dto.getDomiciliarioId() : domiciliarioIdParam;
-
-        log.info("Petición REST: actualizando estado de pedido ID: {} a '{}' con domiciliario ID: {}", id, estadoFinal, domiciliarioFinal);
-        Pedido actualizado = pedidoService.actualizarEstado(id, estadoFinal, domiciliarioFinal);
+            @RequestBody ActualizarEstadoPedidoDto dto) {
+        log.info("Petición REST: actualizando estado de pedido ID: {} a '{}' con domiciliario ID: {}",
+                id, dto.getEstado(), dto.getDomiciliarioId());
+        Pedido actualizado = pedidoService.actualizarEstado(id, dto.getEstado(), dto.getDomiciliarioId());
         return ResponseEntity.ok(PedidoDto.fromEntity(actualizado));
     }
 
-    @Operation(summary = "Crear un nuevo pedido en el sistema (soporta carrito multi-ítem o pedido individual)")
-    @PostMapping({ "", "/", "/ordenar", "/add" })
+    @Operation(summary = "Crear un nuevo pedido en el sistema")
+    @PostMapping("/ordenar")
     public ResponseEntity<PedidoDto> ordenarPlatoConAdicionales(@RequestBody CrearPedidoDto orderRequest) {
-        if (orderRequest == null || (orderRequest.getComidaId() == null && (orderRequest.getItems() == null || orderRequest.getItems().isEmpty()))) {
+        if (orderRequest == null || orderRequest.getItems() == null || orderRequest.getItems().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        log.info("Petición REST: creando pedido en BD (comidaId: {}, items: {})",
-                orderRequest.getComidaId(),
-                orderRequest.getItems() != null ? orderRequest.getItems().size() : 0);
+        log.info("Petición REST: creando pedido en BD para cliente ID: {} (items: {})",
+                orderRequest.getClienteId(), orderRequest.getItems().size());
         Pedido nuevo = pedidoService.crearPedido(orderRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(PedidoDto.fromEntity(nuevo));
     }
 
     @Operation(summary = "Eliminar un pedido por su ID")
-    @DeleteMapping({ "/delete/{id}", "/{id}" })
+    @DeleteMapping({ "/{id}", "/delete/{id}" })
     public ResponseEntity<Void> eliminarPedido(@PathVariable("id") Long id) {
         log.info("Petición REST: eliminando pedido con ID: {}", id);
         pedidoService.delete(id);
