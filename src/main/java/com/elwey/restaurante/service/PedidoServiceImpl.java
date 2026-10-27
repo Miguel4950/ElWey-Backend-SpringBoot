@@ -100,8 +100,12 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = Pedido.builder()
                 .cliente(cliente)
+<<<<<<< HEAD
+                .estado("En preparación")
+=======
                 .domiciliario(null)
                 .estado("Cocinando")
+>>>>>>> 99e4d7c (fix(pedidos,comidas): filtrar comidas activas en menu/tabla y unificar los 3 estados de pedido (Cocinando, Enviado, Entregado))
                 .fechaCreacion(LocalDateTime.now())
                 .items(new ArrayList<>())
                 .build();
