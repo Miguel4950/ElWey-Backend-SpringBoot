@@ -2,6 +2,7 @@ package com.elwey.restaurante.service;
 
 import java.util.List;
 
+import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
 
@@ -20,4 +21,6 @@ public interface CategoriaService {
     void quitarComida(Long comidaId);
 
     Long obtenerIdPorComidaId(Long comidaId);
+
+    List<Adicional> actualizarAdicionales(Long categoriaId, List<Long> adicionalIds);
 }

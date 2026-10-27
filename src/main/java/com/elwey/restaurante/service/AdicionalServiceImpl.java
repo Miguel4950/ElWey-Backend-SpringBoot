@@ -26,9 +26,6 @@ public class AdicionalServiceImpl implements AdicionalService {
     private AdicionalRepository adicionalRepository;
 
     @Autowired
-    private CategoriaService categoriaService;
-
-    @Autowired
     private ComidaRepository comidaRepository;
 
     @Autowired
@@ -71,22 +68,7 @@ public class AdicionalServiceImpl implements AdicionalService {
 
     @Override
     @Transactional
-    public Adicional save(Adicional adicional, Long categoriaId) {
-        if (categoriaId != null) {
-            Categoria categoria = categoriaService.searchById(categoriaId);
-            if (adicional.getCategorias() == null) {
-                adicional.setCategorias(new ArrayList<>());
-            }
-            if (!adicional.getCategorias().contains(categoria)) {
-                adicional.getCategorias().add(categoria);
-            }
-            if (categoria.getAdicionales() == null) {
-                categoria.setAdicionales(new ArrayList<>());
-            }
-            if (!categoria.getAdicionales().contains(adicional)) {
-                categoria.getAdicionales().add(adicional);
-            }
-        }
+    public Adicional save(Adicional adicional) {
         return adicionalRepository.save(adicional);
     }
 

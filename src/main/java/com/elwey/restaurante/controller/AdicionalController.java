@@ -59,13 +59,10 @@ public class AdicionalController {
 
     @Operation(summary = "Crear un nuevo adicional en el sistema")
     @PostMapping({ "", "/", "/add" })
-    public ResponseEntity<AdicionalDto> crearAdicional(
-            @RequestBody AdicionalDto dto,
-            @RequestParam(name = "categoriaId", required = false) Long categoriaId) {
-        Long catId = (categoriaId != null) ? categoriaId : dto.getCategoriaId();
-        log.info("Petición REST: crear adicional: {} con categoría opcional ID: {}", dto.getNombre(), catId);
+    public ResponseEntity<AdicionalDto> crearAdicional(@RequestBody AdicionalDto dto) {
+        log.info("Petición REST: crear adicional sin categoría: {}", dto.getNombre());
         Adicional adicional = dto.toEntity();
-        Adicional nuevo = adicionalService.save(adicional, catId);
+        Adicional nuevo = adicionalService.save(adicional);
         return ResponseEntity.status(HttpStatus.CREATED).body(AdicionalDto.fromEntity(nuevo));
     }
 

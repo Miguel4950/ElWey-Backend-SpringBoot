@@ -19,7 +19,7 @@ public interface AdicionalService {
 
     List<Adicional> findByCategoriaId(Long categoriaId);
 
-    Adicional save(Adicional adicional, Long categoriaId);
+    Adicional save(Adicional adicional);
 
     Adicional update(Long id, Adicional adicional);
 
