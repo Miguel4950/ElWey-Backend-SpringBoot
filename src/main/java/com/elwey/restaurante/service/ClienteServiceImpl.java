@@ -1,25 +1,24 @@
 package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.dto.ClienteDto;
-import com.elwey.restaurante.entities.Administrador;
 import com.elwey.restaurante.entities.Cliente;
-import com.elwey.restaurante.entities.Operador;
+import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.ClienteConPedidosException;
 import com.elwey.restaurante.errors.ClienteNotFoundException;
 import com.elwey.restaurante.errors.CredencialesInvalidasException;
-import com.elwey.restaurante.repository.AdministradorRepository;
 import com.elwey.restaurante.repository.ClienteRepository;
-import com.elwey.restaurante.repository.OperadorRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Implementación del servicio de negocio para Clientes y Autenticación Multi-Rol.
+ * Implementación del servicio de negocio para Clientes y Autenticación
+ * Multi-Rol.
  * Valida credenciales contra las tablas Cliente, Operador y Administrador.
  */
 @Slf4j
@@ -27,13 +26,7 @@ import java.util.List;
 public class ClienteServiceImpl implements ClienteService {
 
     @Autowired
-    private ClienteRepository repo;
-
-    @Autowired
-    private OperadorRepository operadorRepo;
-
-    @Autowired
-    private AdministradorRepository administradorRepo;
+    private ClienteRepository clienteRepo;
 
     @Autowired
     private PedidoRepository pedidoRepo;
@@ -42,14 +35,14 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional(readOnly = true)
     public List<Cliente> listarTodos() {
         log.info("Listando todos los clientes registrados");
-        return repo.findAll();
+        return clienteRepo.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Cliente obtenerPorId(Long id) {
         log.info("Buscando cliente con ID: {}", id);
-        return repo.findById(id)
+        return clienteRepo.findById(id)
                 .orElseThrow(() -> new ClienteNotFoundException(id));
     }
 
@@ -60,85 +53,33 @@ public class ClienteServiceImpl implements ClienteService {
         if (email == null) {
             return null;
         }
-        return repo.findByEmail(email.trim()).orElse(null);
+        return clienteRepo.findByEmail(email.trim()).orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ClienteDto autenticarUsuario(String login, String password) {
-        log.info("Autenticando usuario (3 roles) para login: {}", login);
+    public ClienteDto autenticar(String correo, String password) {
+        log.info("Autenticando cliente por correo: {}", correo);
 
-        if (login == null || login.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Debe proporcionar usuario/correo y contraseña.");
+        if (correo == null || correo.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar correo y contraseña.");
         }
 
-        String limpio = login.trim().toLowerCase();
+        String limpio = correo.trim().toLowerCase();
 
-        // 1. Verificar en tabla Administrador (por usuario o email)
-        Administrador adm = administradorRepo.findByUsuario(limpio).orElse(null);
-        if (adm != null && password.equals(adm.getContrasena())) {
-            return ClienteDto.fromAdministrador(adm);
-        }
-
-        // 2. Verificar en tabla Operador (por usuario o email)
-        Operador op = operadorRepo.findByUsuario(limpio).orElse(null);
-        if (op != null && password.equals(op.getContrasena())) {
-            return ClienteDto.fromOperador(op);
-        }
-
-        // 3. Verificar en tabla Cliente (por email)
-        Cliente cliente = repo.findByEmail(limpio).orElse(null);
+        Cliente cliente = clienteRepo.findByEmail(limpio).orElse(null);
         if (cliente != null && password.equals(cliente.getPassword())) {
-            if (!Boolean.TRUE.equals(cliente.getActivo())) {
+
+            if (cliente.getActivo()) {
+                return ClienteDto.fromEntity(cliente);
+
+            } else {
                 throw new IllegalStateException("La cuenta de usuario se encuentra inactiva.");
             }
-            return ClienteDto.fromCliente(cliente);
-        }
 
-        // 4. Intentar resolver por usuario en Cliente si coincide nombre o correo parcial
-        if (cliente == null) {
-            List<Cliente> todos = repo.findAll();
-            for (Cliente c : todos) {
-                if (c.getEmail() != null && c.getEmail().toLowerCase().startsWith(limpio + "@") && password.equals(c.getPassword())) {
-                    if (!Boolean.TRUE.equals(c.getActivo())) {
-                        throw new IllegalStateException("La cuenta de usuario se encuentra inactiva.");
-                    }
-                    return ClienteDto.fromCliente(c);
-                }
-            }
+        } else {
+            throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu correo y contraseña.");
         }
-
-        throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu correo o usuario y contraseña.");
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ClienteDto autenticarPorRol(String login, String password, String rolEsperado) {
-        ClienteDto dto = autenticarUsuario(login, password);
-        if (rolEsperado != null && !rolEsperado.isBlank()) {
-            if (!rolEsperado.equalsIgnoreCase(dto.getRol())) {
-                throw new CredencialesInvalidasException("Las credenciales ingresadas no corresponden a un usuario con rol " + rolEsperado.toUpperCase());
-            }
-        }
-        return dto;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Cliente autenticar(String email, String password) {
-        ClienteDto dto = autenticarUsuario(email, password);
-        Cliente cliente = obtenerPorEmail(dto.getCorreo());
-        if (cliente != null) {
-            return cliente;
-        }
-        return Cliente.builder()
-                .id(dto.getId())
-                .nombre(dto.getNombre())
-                .email(dto.getCorreo())
-                .telefono(dto.getTelefono())
-                .direccion(dto.getDireccion())
-                .activo(dto.getActivo())
-                .build();
     }
 
     @Override
@@ -152,10 +93,8 @@ public class ClienteServiceImpl implements ClienteService {
         if (existente != null) {
             throw new IllegalArgumentException("El correo ya está en uso.");
         }
-        if (cliente.getFechaRegistro() == null || cliente.getFechaRegistro().isBlank()) {
-            cliente.setFechaRegistro(java.time.LocalDate.now().toString());
-        }
-        return repo.save(cliente);
+        cliente.setFechaRegistro(LocalDate.now().toString());
+        return clienteRepo.save(cliente);
     }
 
     @Override
@@ -193,21 +132,31 @@ public class ClienteServiceImpl implements ClienteService {
             }
         }
 
-        return repo.save(actual);
+        return clienteRepo.save(actual);
+    }
+
+    @Override
+    @Transactional
+    public Cliente desactivarCliente(Long id) {
+        log.info("Desactivando cliente con ID: {}", id);
+        Cliente cliente = clienteRepo.findById(id)
+                .orElseThrow(() -> new ClienteNotFoundException(id));
+        cliente.setActivo(false);
+        return clienteRepo.save(cliente);
     }
 
     @Override
     @Transactional
     public void eliminar(Long id) {
         log.info("Eliminando cliente con ID: {}", id);
-        Cliente cliente = repo.findById(id)
+        Cliente cliente = clienteRepo.findById(id)
                 .orElseThrow(() -> new ClienteNotFoundException(id));
 
-        List<com.elwey.restaurante.entities.Pedido> pedidos = pedidoRepo.findByClienteId(id);
+        List<Pedido> pedidos = pedidoRepo.findByClienteId(id);
         if (pedidos != null && !pedidos.isEmpty()) {
             throw new ClienteConPedidosException(cliente.getNombre());
         }
 
-        repo.deleteById(id);
+        clienteRepo.deleteById(id);
     }
 }

@@ -54,21 +54,12 @@ public class HomeController {
                     .body(Map.of("mensaje", "Debe proporcionar correo y contraseña."));
         }
         try {
-            ClienteDto cliente = clienteService.autenticarUsuario(loginRequest.getCorreo(), loginRequest.getContrasena());
+            ClienteDto cliente = clienteService.autenticar(loginRequest.getCorreo(), loginRequest.getContrasena());
             return ResponseEntity.ok(cliente);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("mensaje", "Credenciales inválidas. Verifica tu correo y contraseña."));
         }
-    }
-
-    @Operation(summary = "Registro de cliente directo en la ruta raíz")
-    @PostMapping("/registro")
-    public ResponseEntity<ClienteDto> registrarCliente(@RequestBody ClienteDto dto) {
-        log.info("Petición REST registro para cliente: {}", dto != null ? dto.getCorreo() : "null");
-        Cliente cliente = dto.toEntity();
-        Cliente guardado = clienteService.guardar(cliente);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ClienteDto.fromEntity(guardado));
     }
 
     @Operation(summary = "Consultar productos administrativos con filtro de texto")

@@ -2,6 +2,7 @@ package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.Pedido;
+import com.elwey.restaurante.errors.CredencialesInvalidasException;
 import com.elwey.restaurante.errors.DomiciliarioNotFoundException;
 import com.elwey.restaurante.repository.DomiciliarioRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
@@ -65,6 +66,9 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
         if (datos.getCelular() != null && !datos.getCelular().isBlank()) {
             existente.setCelular(datos.getCelular().trim());
         }
+        if (datos.getContrasena() != null && !datos.getContrasena().isBlank()) {
+            existente.setContrasena(datos.getContrasena().trim());
+        }
         if (datos.getDisponible() != null) {
             existente.setDisponible(datos.getDisponible());
         }
@@ -97,5 +101,26 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
             }
         }
         domiciliarioRepository.delete(domiciliario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Domiciliario autenticar(String identificador, String contrasena) {
+        if (identificador == null || identificador.trim().isEmpty() || contrasena == null || contrasena.trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar cédula o celular y contraseña.");
+        }
+
+        String limpio = identificador.trim();
+
+        // Buscar por cédula o por celular
+        Domiciliario domiciliario = domiciliarioRepository.findByCedula(limpio)
+                .or(() -> domiciliarioRepository.findByCelular(limpio))
+                .orElseThrow(() -> new CredencialesInvalidasException("Domiciliario no encontrado con la cédula o celular proporcionado."));
+
+        if (domiciliario.getContrasena() == null || !contrasena.equals(domiciliario.getContrasena())) {
+            throw new CredencialesInvalidasException("Contraseña incorrecta para el domiciliario.");
+        }
+
+        return domiciliario;
     }
 }

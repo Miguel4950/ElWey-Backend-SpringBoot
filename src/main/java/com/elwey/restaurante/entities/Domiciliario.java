@@ -30,6 +30,9 @@ public class Domiciliario {
     @Column(nullable = false, unique = false, length = 20)
     private String celular;
 
+    @Column(nullable = true, unique = false, length = 100)
+    private String contrasena;
+
     @Column(nullable = false, unique = false)
     private Boolean disponible;
 

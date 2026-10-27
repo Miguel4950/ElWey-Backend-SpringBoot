@@ -1,5 +1,6 @@
 package com.elwey.restaurante.controller;
 
+import com.elwey.restaurante.dto.LoginRequestDto;
 import com.elwey.restaurante.entities.Operador;
 import com.elwey.restaurante.service.OperadorService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,16 @@ public class OperadorController {
     private OperadorService operadorService;
 
     private static final Logger log = LoggerFactory.getLogger(OperadorController.class);
+
+    @Operation(summary = "Autenticar operador de cocina o despachos")
+    @PostMapping({ "/login", "/auth/login" })
+    public ResponseEntity<Operador> login(@RequestBody LoginRequestDto loginRequest) {
+        String usuario = loginRequest != null ? loginRequest.getCorreo() : null;
+        String contrasena = loginRequest != null ? loginRequest.getContrasena() : null;
+        log.info("Petición REST: login operador con usuario: {}", usuario);
+        Operador op = operadorService.autenticar(usuario, contrasena);
+        return ResponseEntity.ok(op);
+    }
 
     @Operation(summary = "Listar todos los operadores registrados")
     @GetMapping({ "", "/" })

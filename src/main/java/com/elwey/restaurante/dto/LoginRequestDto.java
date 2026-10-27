@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class LoginRequestDto {
 
-    @JsonAlias({ "email", "correo" })
+    @JsonAlias({ "email", "correo", "usuario", "cedula", "celular", "identificador" })
     private String correo;
 
     @JsonAlias({ "password", "contrasena", "contraseña" })

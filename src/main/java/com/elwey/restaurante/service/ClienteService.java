@@ -13,35 +13,16 @@ public interface ClienteService {
 
     Cliente obtenerPorId(Long id);
 
-    default Cliente obtenerPorId(Integer id) {
-        return id != null ? obtenerPorId(id.longValue()) : null;
-    }
-
     Cliente obtenerPorEmail(String email);
 
-    Cliente autenticar(String email, String password);
-
-    ClienteDto autenticarUsuario(String login, String password);
-
-    ClienteDto autenticarPorRol(String login, String password, String rolEsperado);
+    ClienteDto autenticar(String email, String password);
 
     Cliente guardar(Cliente cliente);
 
     Cliente actualizar(Long id, Cliente cliente);
 
+    Cliente desactivarCliente(Long id);
+
     void eliminar(Long id);
 
-    default void eliminar(Integer id) {
-        if (id != null) {
-            eliminar(id.longValue());
-        }
-    }
-
-    default List<Cliente> searchAll() {
-        return listarTodos();
-    }
-
-    default Cliente searchById(Long id) {
-        return obtenerPorId(id);
-    }
 }

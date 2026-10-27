@@ -25,5 +25,7 @@ public interface DomiciliarioService {
 
     Domiciliario actualizarDisponibilidad(Long id, Boolean disponible);
 
+    Domiciliario autenticar(String identificador, String contrasena);
+
     void delete(Long id);
 }

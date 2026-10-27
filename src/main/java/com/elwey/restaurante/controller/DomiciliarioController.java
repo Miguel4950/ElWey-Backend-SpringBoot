@@ -1,5 +1,6 @@
 package com.elwey.restaurante.controller;
 
+import com.elwey.restaurante.dto.LoginRequestDto;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.service.DomiciliarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +27,16 @@ public class DomiciliarioController {
     private DomiciliarioService domiciliarioService;
 
     private static final Logger log = LoggerFactory.getLogger(DomiciliarioController.class);
+
+    @Operation(summary = "Autenticar domiciliario mediante cédula o celular y contraseña")
+    @PostMapping({ "/login", "/auth/login" })
+    public ResponseEntity<Domiciliario> login(@RequestBody LoginRequestDto loginRequest) {
+        String identificador = loginRequest != null ? loginRequest.getCorreo() : null;
+        String contrasena = loginRequest != null ? loginRequest.getContrasena() : null;
+        log.info("Petición REST: login domiciliario con identificador: {}", identificador);
+        Domiciliario domiciliario = domiciliarioService.autenticar(identificador, contrasena);
+        return ResponseEntity.ok(domiciliario);
+    }
 
     @Operation(summary = "Listar todos los domiciliarios registrados")
     @GetMapping({ "", "/" })
