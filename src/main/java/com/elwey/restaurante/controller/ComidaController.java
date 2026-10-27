@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "Comidas", description = "Endpoints para el catálogo de platos")
 @RestController
-@RequestMapping({ "/api/comidas", "/comidas" })
+@RequestMapping({ "/comidas", "/comida" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class ComidaController {
 
@@ -84,7 +84,7 @@ public class ComidaController {
     }
 
     @Operation(summary = "Actualizar un plato existente y su categoría")
-    @PutMapping({ "/{id}", "/update" })
+    @PutMapping({ "/{id}", "/update", "/update/{id}" })
     public ResponseEntity<Void> updateComida(
             @PathVariable(name = "id", required = false) Long id,
             @RequestBody ComidaDto dto) {

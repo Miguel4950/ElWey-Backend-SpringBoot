@@ -88,6 +88,9 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
         if (domiciliario == null || domiciliario.getCedula() == null || domiciliario.getCedula().isBlank()) {
             throw new IllegalArgumentException("La cédula no es válida.");
         }
+        if (domiciliario.getContrasena() == null || domiciliario.getContrasena().isBlank()) {
+            throw new IllegalArgumentException("Debe proporcionar una contraseña para el domiciliario.");
+        }
         Domiciliario existente = obtenerPorCedula(domiciliario.getCedula());
         if (existente != null) {
             throw new IllegalArgumentException("La cédula ya está en uso.");

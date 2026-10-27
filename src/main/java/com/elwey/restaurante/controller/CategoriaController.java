@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Tag(name = "Categorías", description = "Endpoints para la consulta de categorías de platos")
 @RestController
-@RequestMapping({ "/api/categorias", "/categorias" })
+@RequestMapping({ "/categorias", "/categoria" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class CategoriaController {
 
@@ -27,7 +27,7 @@ public class CategoriaController {
     private static final Logger log = LoggerFactory.getLogger(CategoriaController.class);
 
     @Operation(summary = "Listar todas las categorías del menú")
-    @GetMapping({ "", "/" })
+    @GetMapping({ "", "/", "/all" })
     public ResponseEntity<List<Categoria>> listarCategorias() {
         log.info("Petición REST: listar categorías");
         return ResponseEntity.ok(categoriaService.seeAll());

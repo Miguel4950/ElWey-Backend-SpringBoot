@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "Pedidos", description = "Endpoints para la gestión, ordenamiento, monitoreo y cambio de estado de pedidos")
 @RestController
-@RequestMapping({ "/api/pedidos", "/pedidos" })
+@RequestMapping({ "/pedidos", "/pedido" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class PedidoController {
 

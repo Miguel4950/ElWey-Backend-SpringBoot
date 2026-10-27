@@ -16,14 +16,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Controlador REST para Clientes y Autenticación del sistema "El Wey".
- * Soporta login unificado multi-rol (Cliente, Operador, Administrador) y logins
- * específicos por rol.
+ * Controlador REST para Clientes y su Autenticación en el sistema "El Wey".
  */
 @Slf4j
-@Tag(name = "Clientes y Autenticación", description = "Endpoints para registro, perfil de cliente y login multi-rol")
+@Tag(name = "Clientes", description = "Endpoints para registro, perfil, listado y login de clientes")
 @RestController
-@RequestMapping("/cliente")
+@RequestMapping({ "/cliente", "/clientes" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class ClienteController {
 
@@ -42,7 +40,7 @@ public class ClienteController {
     }
 
     @Operation(summary = "Listar todos los clientes registrados sin exponer sus contraseñas")
-    @GetMapping({ "/clientes", "/all" })
+    @GetMapping({ "", "/", "/clientes", "/all" })
     public ResponseEntity<List<ClienteDto>> listarTodos() {
         log.info("Petición REST: listar todos los clientes");
         List<ClienteDto> dtos = clienteService.listarTodos().stream()
@@ -60,7 +58,7 @@ public class ClienteController {
     }
 
     @Operation(summary = "Registrar un nuevo cliente en la plataforma")
-    @PostMapping("/add")
+    @PostMapping({ "", "/", "/add" })
     public ResponseEntity<ClienteDto> registrarCliente(@RequestBody ClienteDto dto) {
         log.info("Petición REST: registrar cliente: {}", dto.getCorreo());
         Cliente cliente = dto.toEntity();
@@ -69,7 +67,7 @@ public class ClienteController {
     }
 
     @Operation(summary = "Actualizar información de perfil de un cliente")
-    @PutMapping({ "/update", "/update/{id}" })
+    @PutMapping({ "/update", "/update/{id}", "/{id}" })
     public ResponseEntity<ClienteDto> actualizarCliente(
             @PathVariable(name = "id", required = false) Long id,
             @RequestBody ClienteDto dto) {
@@ -80,8 +78,16 @@ public class ClienteController {
         return ResponseEntity.ok(ClienteDto.fromEntity(actualizado));
     }
 
+    @Operation(summary = "Desactivar la cuenta de un cliente sin borrar su historial")
+    @PutMapping("/desactivar/{id}")
+    public ResponseEntity<ClienteDto> desactivarCliente(@PathVariable("id") Long id) {
+        log.info("Petición REST: desactivando cuenta del cliente ID: {}", id);
+        Cliente desactivado = clienteService.desactivarCliente(id);
+        return ResponseEntity.ok(ClienteDto.fromEntity(desactivado));
+    }
+
     @Operation(summary = "Eliminar permanentemente la cuenta de un cliente")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping({ "/delete/{id}", "/{id}" })
     public ResponseEntity<Void> eliminarCliente(@PathVariable("id") Long id) {
         log.info("Petición REST: eliminando cuenta del cliente ID: {}", id);
         clienteService.eliminar(id);

@@ -385,13 +385,13 @@ public class DataLoader implements CommandLineRunner {
                 // Domiciliarios
                 List<Domiciliario> domiciliarios = new ArrayList<>();
                 domiciliarios.add(Domiciliario.builder().cedula("1010203040").nombre("Carlos Gómez")
-                                .celular("+57 311 222 3333").contrasena("domi123").disponible(true).build());
+                                .celular("+57 311 222 3333").contrasena("domi123").disponible(false).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1020304050").nombre("Andrés Parra")
-                                .celular("+57 312 444 5555").contrasena("domi123").disponible(true).build());
+                                .celular("+57 312 444 5555").contrasena("domi123").disponible(false).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1030405060").nombre("Mateo Quintana")
                                 .celular("+57 315 666 7777").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1040506070").nombre("Javier Morales")
-                                .celular("+57 318 888 9999").contrasena("domi123").disponible(false).build());
+                                .celular("+57 318 888 9999").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1050607080").nombre("Sebastián Roa")
                                 .celular("+57 320 111 2222").contrasena("domi123").disponible(true).build());
 
@@ -423,7 +423,7 @@ public class DataLoader implements CommandLineRunner {
                 Pedido ped1 = Pedido.builder()
                                 .cliente(messi)
                                 .domiciliario(domiciliarios.get(0))
-                                .estado("En camino")
+                                .estado("Enviado")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(45))
                                 .build();
                 ped1 = pedidoRepository.save(ped1);
@@ -449,8 +449,8 @@ public class DataLoader implements CommandLineRunner {
                 // Pedido 2: CR7
                 Pedido ped2 = Pedido.builder()
                                 .cliente(cr7)
-                                .domiciliario(domiciliarios.get(1))
-                                .estado("En preparación")
+                                .domiciliario(null)
+                                .estado("Cocinando")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(20))
                                 .build();
                 ped2 = pedidoRepository.save(ped2);
@@ -500,8 +500,8 @@ public class DataLoader implements CommandLineRunner {
                 // Pedido 4: James Rodríguez
                 Pedido ped4 = Pedido.builder()
                                 .cliente(james)
-                                .domiciliario(domiciliarios.get(4))
-                                .estado("En preparación")
+                                .domiciliario(null)
+                                .estado("Recibido")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(15))
                                 .build();
                 ped4 = pedidoRepository.save(ped4);
@@ -525,7 +525,7 @@ public class DataLoader implements CommandLineRunner {
                 // Pedido 5: Luis Díaz
                 Pedido ped5 = Pedido.builder()
                                 .cliente(lucho)
-                                .domiciliario(domiciliarios.get(0))
+                                .domiciliario(domiciliarios.get(4))
                                 .estado("Entregado")
                                 .fechaCreacion(LocalDateTime.now().minusHours(5))
                                 .fechaEntrega(LocalDateTime.now().minusHours(4))
@@ -552,7 +552,7 @@ public class DataLoader implements CommandLineRunner {
                 Pedido ped6 = Pedido.builder()
                                 .cliente(neymar)
                                 .domiciliario(domiciliarios.get(1))
-                                .estado("En camino")
+                                .estado("Enviado")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(35))
                                 .build();
                 ped6 = pedidoRepository.save(ped6);

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "Adicionales", description = "Endpoints para la gestión y consulta de adicionales e ingredientes extra")
 @RestController
-@RequestMapping("/api/adicionales")
+@RequestMapping({ "/adicionales", "/adicional" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class AdicionalController {
 
@@ -31,7 +31,7 @@ public class AdicionalController {
     private static final Logger log = LoggerFactory.getLogger(AdicionalController.class);
 
     @Operation(summary = "Listar todos los adicionales registrados")
-    @GetMapping({ "", "/" })
+    @GetMapping({ "", "/", "/all" })
     public ResponseEntity<List<AdicionalDto>> listarTodos() {
         log.info("Petición REST: listar todos los adicionales");
         List<AdicionalDto> dtos = adicionalService.findAll().stream()
@@ -58,7 +58,7 @@ public class AdicionalController {
     }
 
     @Operation(summary = "Crear un nuevo adicional en el sistema")
-    @PostMapping({ "", "/" })
+    @PostMapping({ "", "/", "/add" })
     public ResponseEntity<AdicionalDto> crearAdicional(
             @RequestBody AdicionalDto dto,
             @RequestParam(name = "categoriaId", required = false) Long categoriaId) {
@@ -74,7 +74,7 @@ public class AdicionalController {
     }
 
     @Operation(summary = "Actualizar información de un adicional existente")
-    @PutMapping("/{id}")
+    @PutMapping({ "/{id}", "/update/{id}" })
     public ResponseEntity<AdicionalDto> actualizarAdicional(
             @PathVariable("id") Long id,
             @RequestBody AdicionalDto dto) {
@@ -84,7 +84,7 @@ public class AdicionalController {
     }
 
     @Operation(summary = "Eliminar de forma segura un adicional desvinculándolo de sus relaciones")
-    @DeleteMapping("/{id}")
+    @DeleteMapping({ "/{id}", "/delete/{id}" })
     public ResponseEntity<Void> eliminarAdicional(@PathVariable("id") Long id) {
         log.info("Petición REST: eliminar adicional con ID: {}", id);
         adicionalService.delete(id);

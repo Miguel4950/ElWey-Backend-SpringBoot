@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Tag(name = "Operadores", description = "Endpoints para registro, edición, listado y login de operadores")
 @RestController
-@RequestMapping({ "/operador", "/api/operadores" })
+@RequestMapping({ "/operador", "/operadores" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class OperadorController {
 
@@ -29,7 +29,7 @@ public class OperadorController {
     private OperadorService operadorService;
 
     @Operation(summary = "Login para operadores (por usuario)")
-    @PostMapping({ "/login", "/auth/login" })
+    @PostMapping("/login")
     public ResponseEntity<OperadorDto> login(@RequestBody LoginRequestDto loginRequest) {
         log.info("Petición REST: autenticar operador {}", loginRequest != null ? loginRequest.getCorreo() : "null");
         String usuario = loginRequest != null ? loginRequest.getCorreo() : null;

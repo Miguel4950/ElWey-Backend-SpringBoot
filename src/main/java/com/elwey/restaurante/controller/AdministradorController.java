@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Tag(name = "Administradores", description = "Endpoint de autenticación para Administrador")
 @RestController
-@RequestMapping({ "/admin", "/administrador", "/api/admin", "/api/administradores" })
+@RequestMapping({ "/administrador", "/admin" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class AdministradorController {
 
@@ -24,7 +24,7 @@ public class AdministradorController {
     private AdministradorService administradorService;
 
     @Operation(summary = "Login para administrador (por usuario)")
-    @PostMapping({ "/login", "/auth/login" })
+    @PostMapping("/login")
     public ResponseEntity<AdministradorDto> login(@RequestBody LoginRequestDto loginRequest) {
         log.info("Petición REST: autenticar administrador {}", loginRequest != null ? loginRequest.getCorreo() : "null");
         String usuario = loginRequest != null ? loginRequest.getCorreo() : null;

@@ -31,6 +31,7 @@ public class ClienteDto {
 
     private String telefono;
     private String direccion;
+    private Boolean activo;
     private String fechaRegistro;
 
     public static ClienteDto fromEntity(Cliente cliente) {
@@ -44,6 +45,7 @@ public class ClienteDto {
                 .contrasena(null)
                 .telefono(cliente.getTelefono())
                 .direccion(cliente.getDireccion())
+                .activo(cliente.getActivo())
                 .fechaRegistro(cliente.getFechaRegistro())
                 .build();
     }
@@ -57,6 +59,7 @@ public class ClienteDto {
                 .password(this.contrasena)
                 .telefono(this.telefono)
                 .direccion(this.direccion)
+                .activo(this.activo != null ? this.activo : true)
                 .fechaRegistro(this.fechaRegistro)
                 .build();
     }

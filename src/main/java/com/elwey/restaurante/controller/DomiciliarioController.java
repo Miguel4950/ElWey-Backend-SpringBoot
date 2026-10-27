@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Tag(name = "Domiciliarios", description = "Endpoints para registro, disponibilidad, listado y login de domiciliarios")
 @RestController
-@RequestMapping({ "/domiciliario", "/api/domiciliarios" })
+@RequestMapping({ "/domiciliario", "/domiciliarios" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class DomiciliarioController {
 
@@ -29,7 +29,7 @@ public class DomiciliarioController {
     private DomiciliarioService domiciliarioService;
 
     @Operation(summary = "Login para domiciliarios (por cédula o celular)")
-    @PostMapping({ "/login", "/auth/login" })
+    @PostMapping("/login")
     public ResponseEntity<DomiciliarioDto> login(@RequestBody LoginRequestDto loginRequest) {
         log.info("Petición REST: autenticar domiciliario {}", loginRequest != null ? loginRequest.getCorreo() : "null");
         String identificador = loginRequest != null ? loginRequest.getCorreo() : null;
