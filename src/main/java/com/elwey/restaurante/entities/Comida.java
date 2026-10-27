@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * Entidad que representa un plato de comida en el restaurante.
- * Posee relación ManyToOne con Categoria y ManyToMany con Adicional (lado dueño).
+ * Posee relación ManyToOne con Categoria y OneToMany con ItemPedido.
  */
 @Entity
 @Getter
@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"categoria", "adicionalesDisponibles"})
+@ToString(exclude = {"categoria", "itemsPedido"})
 public class Comida {
 
     @Id
@@ -44,21 +44,16 @@ public class Comida {
     @Builder.Default
     private Boolean activo = true;
 
-    // Relación Many-to-One: la comida es dueña de la llave foránea
+    // Relación Many-to-One: la comida es dueña de la llave foránea con Categoria
     @ManyToOne
     @JoinColumn(name = "id_categoria", nullable = false, unique = false)
     private Categoria categoria;
 
-    // Relación Many-to-Many: la comida es dueña de la relación con los adicionales disponibles
+    // Relación One-to-Many con ItemPedido
     @JsonIgnore
-    @ManyToMany
-    @JoinTable(
-        name = "comida_adicional",
-        joinColumns = @JoinColumn(name = "id_comida"),
-        inverseJoinColumns = @JoinColumn(name = "id_adicional")
-    )
+    @OneToMany(mappedBy = "comida")
     @Builder.Default
-    private List<Adicional> adicionalesDisponibles = new ArrayList<>();
+    private List<ItemPedido> itemsPedido = new ArrayList<>();
 
     // Constructor de compatibilidad para inicializaciones del DataLoader
     public Comida(Long id, String nombre, Double precio, String descripcion, String imagenUrl, String etiqueta, Boolean activo, Categoria categoria) {
@@ -70,7 +65,7 @@ public class Comida {
         this.etiqueta = etiqueta;
         this.activo = activo != null ? activo : true;
         this.categoria = categoria;
-        this.adicionalesDisponibles = new ArrayList<>();
+        this.itemsPedido = new ArrayList<>();
     }
 
     // Métodos de compatibilidad con las vistas de plantillas

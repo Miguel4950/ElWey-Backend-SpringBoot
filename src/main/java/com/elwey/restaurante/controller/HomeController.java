@@ -3,7 +3,6 @@ package com.elwey.restaurante.controller;
 import com.elwey.restaurante.dto.ClienteDto;
 import com.elwey.restaurante.dto.ComidaDto;
 import com.elwey.restaurante.dto.LoginRequestDto;
-import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.service.ClienteService;
 import com.elwey.restaurante.service.ComidaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +38,7 @@ public class HomeController {
     @GetMapping({ "/", "/index", "/home" })
     public ResponseEntity<List<ComidaDto>> inicio() {
         log.info("Petición REST: consultar comidas para inicio");
-        List<ComidaDto> dtos = service.listarTodas().stream()
+        List<ComidaDto> dtos = service.listarTodos().stream()
                 .map(ComidaDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);

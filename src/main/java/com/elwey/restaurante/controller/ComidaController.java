@@ -1,7 +1,6 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.ComidaDto;
-import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
 import com.elwey.restaurante.service.CategoriaService;
@@ -20,9 +19,9 @@ import java.util.stream.Collectors;
 
 /**
  * Controlador REST para el catálogo de comidas del restaurante "El Wey".
- * Permite operaciones CRUD completas y gestión de la lista de adicionales disponibles por comida.
+ * Permite operaciones CRUD completas sobre Comida.
  */
-@Tag(name = "Comidas", description = "Endpoints para el catálogo de platos y sus adicionales disponibles")
+@Tag(name = "Comidas", description = "Endpoints para el catálogo de platos")
 @RestController
 @RequestMapping({ "/api/comidas", "/comidas" })
 @CrossOrigin(origins = "http://localhost:4200")
@@ -38,9 +37,9 @@ public class ComidaController {
 
     @Operation(summary = "Listar todas las comidas registradas")
     @GetMapping({ "", "/", "/all", "/tabla", "/tarjetas" })
-    public ResponseEntity<List<ComidaDto>> seeAll() {
+    public ResponseEntity<List<ComidaDto>> listarTodos() {
         log.info("Petición REST: consultar todas las comidas");
-        List<ComidaDto> dtos = service.seeAll().stream()
+        List<ComidaDto> dtos = service.listarTodos().stream()
                 .map(ComidaDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
@@ -56,13 +55,12 @@ public class ComidaController {
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(summary = "Consultar el detalle de una comida con sus adicionales disponibles")
+    @Operation(summary = "Consultar el detalle de una comida por su ID")
     @GetMapping({ "/{id}", "/find/{id}" })
-    public ResponseEntity<ComidaDto> findById(@PathVariable("id") Long id) {
+    public ResponseEntity<ComidaDto> obtenerPorId(@PathVariable("id") Long id) {
         log.info("Petición REST: consultar comida con ID: {}", id);
-        Comida comida = service.searchById(id);
-        List<Adicional> adicionales = service.obtenerAdicionalesDisponibles(id);
-        return ResponseEntity.ok(ComidaDto.fromEntityWithAdicionales(comida, adicionales));
+        Comida comida = service.obtenerPorId(id);
+        return ResponseEntity.ok(ComidaDto.fromEntity(comida));
     }
 
     @Operation(summary = "Buscar comidas por nombre o categoría")
@@ -75,36 +73,36 @@ public class ComidaController {
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(summary = "Crear un nuevo plato de comida con su categoría y adicionales disponibles")
+    @Operation(summary = "Crear un nuevo plato de comida con su categoría")
     @PostMapping({ "", "/", "/add", "/guardar" })
     public ResponseEntity<Void> addComida(@RequestBody ComidaDto dto) {
-        log.info("Petición REST: crear plato: {} con categoría ID: {} y adicionales: {}",
-                dto.getNombre(), dto.getCategoriaId(), dto.getAdicionalesIds());
+        log.info("Petición REST: crear plato: {} con categoría ID: {}",
+                dto.getNombre(), dto.getCategoriaId());
         Comida comida = dto.toEntity();
-        service.save(comida, dto.getCategoriaId(), dto.getAdicionalesIds());
+        service.save(comida, dto.getCategoriaId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "Actualizar un plato existente y modificar su lista de adicionales disponibles")
+    @Operation(summary = "Actualizar un plato existente y su categoría")
     @PutMapping({ "/{id}", "/update" })
     public ResponseEntity<Void> updateComida(
             @PathVariable(name = "id", required = false) Long id,
             @RequestBody ComidaDto dto) {
         Long targetId = (id != null) ? id : dto.getId();
-        log.info("Petición REST: actualizar plato ID: {} con adicionales: {}", targetId, dto.getAdicionalesIds());
+        log.info("Petición REST: actualizar plato ID: {}", targetId);
         Comida comida = dto.toEntity();
         if (targetId != null) {
             comida.setId(targetId);
         }
-        service.save(comida, dto.getCategoriaId(), dto.getAdicionalesIds());
+        service.save(comida, dto.getCategoriaId());
         return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Eliminar un plato por ID si no tiene pedidos históricos")
     @DeleteMapping({ "/{id}", "/delete/{id}" })
-    public ResponseEntity<Void> deleteComida(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable("id") Long id) {
         log.info("Petición REST: eliminar comida con ID: {}", id);
-        service.deleteById(id);
+        service.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 

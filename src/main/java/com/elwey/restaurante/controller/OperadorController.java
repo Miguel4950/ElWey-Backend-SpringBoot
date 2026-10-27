@@ -1,79 +1,87 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.LoginRequestDto;
+import com.elwey.restaurante.dto.OperadorDto;
 import com.elwey.restaurante.entities.Operador;
 import com.elwey.restaurante.service.OperadorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Controlador REST para el módulo administrativo y de gestión de Operadores de cocina/despacho.
+ * Controlador REST para Operadores y su Autenticación en el sistema "El Wey".
  */
-@Tag(name = "Operadores", description = "Endpoints para el CRUD de operadores del restaurante")
+@Slf4j
+@Tag(name = "Operadores", description = "Endpoints para registro, edición, listado y login de operadores")
 @RestController
-@RequestMapping("/api/operadores")
+@RequestMapping({ "/operador", "/api/operadores" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class OperadorController {
 
     @Autowired
     private OperadorService operadorService;
 
-    private static final Logger log = LoggerFactory.getLogger(OperadorController.class);
-
-    @Operation(summary = "Autenticar operador de cocina o despachos")
+    @Operation(summary = "Login para operadores (por usuario)")
     @PostMapping({ "/login", "/auth/login" })
-    public ResponseEntity<Operador> login(@RequestBody LoginRequestDto loginRequest) {
+    public ResponseEntity<OperadorDto> login(@RequestBody LoginRequestDto loginRequest) {
+        log.info("Petición REST: autenticar operador {}", loginRequest != null ? loginRequest.getCorreo() : "null");
         String usuario = loginRequest != null ? loginRequest.getCorreo() : null;
         String contrasena = loginRequest != null ? loginRequest.getContrasena() : null;
-        log.info("Petición REST: login operador con usuario: {}", usuario);
-        Operador op = operadorService.autenticar(usuario, contrasena);
-        return ResponseEntity.ok(op);
+
+        OperadorDto respuesta = operadorService.autenticar(usuario, contrasena);
+        return ResponseEntity.ok(respuesta);
     }
 
-    @Operation(summary = "Listar todos los operadores registrados")
-    @GetMapping({ "", "/" })
-    public ResponseEntity<List<Operador>> listarTodos() {
+    @Operation(summary = "Listar todos los operadores registrados sin exponer sus contraseñas")
+    @GetMapping({ "", "/", "/all", "/operadores" })
+    public ResponseEntity<List<OperadorDto>> listarTodos() {
         log.info("Petición REST: listar todos los operadores");
-        return ResponseEntity.ok(operadorService.listarTodos());
+        List<OperadorDto> dtos = operadorService.listarTodos().stream()
+                .map(OperadorDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @Operation(summary = "Obtener un operador por su ID")
     @GetMapping("/{id}")
-    public ResponseEntity<Operador> obtenerPorId(@PathVariable("id") Long id) {
+    public ResponseEntity<OperadorDto> obtenerPorId(@PathVariable("id") Long id) {
         log.info("Petición REST: obtener operador con ID: {}", id);
-        return ResponseEntity.ok(operadorService.obtenerPorId(id));
+        Operador operador = operadorService.obtenerPorId(id);
+        return ResponseEntity.ok(OperadorDto.fromEntity(operador));
     }
 
-    @Operation(summary = "Registrar un nuevo operador en el sistema")
-    @PostMapping({ "", "/" })
-    public ResponseEntity<Operador> crearOperador(@RequestBody Operador operador) {
-        log.info("Petición REST: crear nuevo operador: {}", operador.getUsuario());
+    @Operation(summary = "Registrar un nuevo operador en la plataforma")
+    @PostMapping({ "", "/", "/add" })
+    public ResponseEntity<OperadorDto> registrarOperador(@RequestBody OperadorDto dto) {
+        log.info("Petición REST: registrar operador: {}", dto.getUsuario());
+        Operador operador = dto.toEntity();
         Operador guardado = operadorService.guardar(operador);
-        return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
+        return ResponseEntity.status(HttpStatus.CREATED).body(OperadorDto.fromEntity(guardado));
     }
 
-    @Operation(summary = "Actualizar información de un operador existente")
-    @PutMapping("/{id}")
-    public ResponseEntity<Operador> actualizarOperador(
-            @PathVariable("id") Long id,
-            @RequestBody Operador operador) {
-        log.info("Petición REST: actualizar operador con ID: {}", id);
-        Operador actualizado = operadorService.actualizar(id, operador);
-        return ResponseEntity.ok(actualizado);
+    @Operation(summary = "Actualizar información de un operador")
+    @PutMapping({ "/update", "/update/{id}", "/{id}" })
+    public ResponseEntity<OperadorDto> actualizarOperador(
+            @PathVariable(name = "id", required = false) Long id,
+            @RequestBody OperadorDto dto) {
+        Long targetId = (id != null) ? id : (dto != null ? dto.getId() : null);
+        log.info("Petición REST: actualizando operador con ID: {}", targetId);
+        Operador operador = (dto != null) ? dto.toEntity() : null;
+        Operador actualizado = operadorService.actualizar(targetId, operador);
+        return ResponseEntity.ok(OperadorDto.fromEntity(actualizado));
     }
 
-    @Operation(summary = "Eliminar un operador por su ID")
-    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar permanentemente un operador")
+    @DeleteMapping({ "/delete/{id}", "/{id}" })
     public ResponseEntity<Void> eliminarOperador(@PathVariable("id") Long id) {
-        log.info("Petición REST: eliminar operador con ID: {}", id);
+        log.info("Petición REST: eliminando operador con ID: {}", id);
         operadorService.eliminar(id);
         return ResponseEntity.noContent().build();
     }

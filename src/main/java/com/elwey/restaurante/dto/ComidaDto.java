@@ -12,7 +12,8 @@ import java.util.List;
 
 /**
  * DTO para transferencia de datos de Comida hacia y desde el Frontend.
- * Soporta aplanamiento de categoría y lista de adicionales con sus respectivos IDs.
+ * Envía la información del plato, su categoría y los adicionales asociados en el DTO
+ * sin almacenarlos directamente en la entidad Comida.
  */
 @Getter
 @Setter
@@ -48,9 +49,11 @@ public class ComidaDto {
         Long catId = (comida.getCategoria() != null) ? comida.getCategoria().getId() : null;
         String catNombre = (comida.getCategoria() != null) ? comida.getCategoria().getNombre() : null;
 
+        List<Adicional> listaAdicionales = new ArrayList<>();
         List<Long> adicIds = new ArrayList<>();
-        if (comida.getAdicionalesDisponibles() != null) {
-            for (Adicional a : comida.getAdicionalesDisponibles()) {
+        if (comida.getCategoria() != null && comida.getCategoria().getAdicionales() != null) {
+            listaAdicionales = new ArrayList<>(comida.getCategoria().getAdicionales());
+            for (Adicional a : listaAdicionales) {
                 if (a != null && a.getId() != null) {
                     adicIds.add(a.getId());
                 }
@@ -67,18 +70,17 @@ public class ComidaDto {
                 .activo(comida.getActivo())
                 .categoriaId(catId)
                 .categoriaNombre(catNombre)
+                .adicionales(listaAdicionales)
                 .adicionalesIds(adicIds)
-                .adicionales(null) // Para listas generales no anidamos el objeto completo para optimizar payload
                 .build();
     }
 
     public static ComidaDto fromEntityWithAdicionales(Comida comida, List<Adicional> adicionales) {
         ComidaDto dto = fromEntity(comida);
-        if (dto != null) {
-            List<Adicional> list = adicionales != null ? adicionales : new ArrayList<>();
-            dto.setAdicionales(list);
+        if (dto != null && adicionales != null) {
+            dto.setAdicionales(adicionales);
             List<Long> ids = new ArrayList<>();
-            for (Adicional a : list) {
+            for (Adicional a : adicionales) {
                 if (a != null && a.getId() != null) {
                     ids.add(a.getId());
                 }

@@ -380,16 +380,6 @@ public class DataLoader implements CommandLineRunner {
                 categoriaRepository.save(catEspecialidades);
                 categoriaRepository.save(catBurritos);
 
-                // Asociar adicionales disponibles a cada una de las 40 comidas desde su
-                // categoría
-                List<Comida> todasLasComidas = comidaRepository.findAll();
-                for (Comida c : todasLasComidas) {
-                        if (c.getCategoria() != null && c.getCategoria().getAdicionales() != null) {
-                                c.setAdicionalesDisponibles(new ArrayList<>(c.getCategoria().getAdicionales()));
-                                comidaRepository.save(c);
-                        }
-                }
-
                 // 6. Crear perfiles del personal del restaurante
 
                 // Domiciliarios

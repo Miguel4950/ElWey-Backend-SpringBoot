@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Implementación de la capa de servicio para Adicional.
- * Proporciona lógica transaccional para CRUD y desvinculación segura en relaciones ManyToMany.
+ * Proporciona lógica transaccional para CRUD y desvinculación segura en relaciones ManyToMany con Categoria.
  */
 @Service
 public class AdicionalServiceImpl implements AdicionalService {
@@ -51,11 +51,6 @@ public class AdicionalServiceImpl implements AdicionalService {
     @Override
     @Transactional(readOnly = true)
     public List<Adicional> findByComidaId(Long comidaId) {
-        List<Adicional> deComida = adicionalRepository.findByComidasId(comidaId);
-        if (deComida != null && !deComida.isEmpty()) {
-            return deComida;
-        }
-        // Respaldo: si aún no están asignados en la tabla directa, buscar los de su categoría
         Comida comida = comidaRepository.findById(comidaId).orElse(null);
         if (comida != null && comida.getCategoria() != null) {
             return adicionalRepository.findByCategoriasId(comida.getCategoria().getId());
@@ -117,7 +112,7 @@ public class AdicionalServiceImpl implements AdicionalService {
     public void delete(Long id) {
         Adicional adicional = findById(id);
 
-        // 1. Desvincular de las categorías dueñas de la relación ManyToMany (tabla categoria_adicional)
+        // Desvincular de las categorías dueñas de la relación ManyToMany (tabla categoria_adicional)
         if (adicional.getCategorias() != null) {
             for (Categoria c : adicional.getCategorias()) {
                 if (c.getAdicionales() != null) {
@@ -127,17 +122,7 @@ public class AdicionalServiceImpl implements AdicionalService {
             adicional.getCategorias().clear();
         }
 
-        // 2. Desvincular de las comidas dueñas de la relación ManyToMany (tabla comida_adicional)
-        if (adicional.getComidas() != null) {
-            for (Comida c : adicional.getComidas()) {
-                if (c.getAdicionalesDisponibles() != null) {
-                    c.getAdicionalesDisponibles().remove(adicional);
-                }
-            }
-            adicional.getComidas().clear();
-        }
-
-        // 3. Eliminar físicamente el adicional sin violar restricciones de llave foránea
+        // Eliminar físicamente el adicional sin violar restricciones de llave foránea
         adicionalRepository.delete(adicional);
     }
 }

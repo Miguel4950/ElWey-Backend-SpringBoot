@@ -1,31 +1,29 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.dto.DomiciliarioDto;
 import com.elwey.restaurante.entities.Domiciliario;
 import java.util.List;
 
 /**
- * Interfaz de la capa de servicio para Domiciliarios.
- * Maneja operaciones CRUD y control de disponibilidad en tiempo real.
+ * Interfaz de la capa de Servicio de Negocio para Domiciliarios y su Autenticación.
  */
 public interface DomiciliarioService {
 
-    List<Domiciliario> searchAll();
-
-    default List<Domiciliario> listarTodos() {
-        return searchAll();
-    }
+    List<Domiciliario> listarTodos();
 
     List<Domiciliario> listarDisponibles();
 
-    Domiciliario searchById(Long id);
+    Domiciliario obtenerPorId(Long id);
 
-    Domiciliario save(Domiciliario domiciliario);
+    Domiciliario obtenerPorCedula(String cedula);
+
+    DomiciliarioDto autenticar(String identificador, String contrasena);
+
+    Domiciliario guardar(Domiciliario domiciliario);
 
     Domiciliario actualizar(Long id, Domiciliario domiciliario);
 
     Domiciliario actualizarDisponibilidad(Long id, Boolean disponible);
 
-    Domiciliario autenticar(String identificador, String contrasena);
-
-    void delete(Long id);
+    void eliminar(Long id);
 }

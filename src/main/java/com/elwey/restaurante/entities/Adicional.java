@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Entidad que representa un Adicional (ingrediente extra, salsa, complemento).
- * Mapea relaciones ManyToMany con Categoria y Comida, y OneToMany con ItemPedidoAdicional.
+ * Mapea relaciones ManyToMany con Categoria y OneToMany con ItemPedidoAdicional.
  */
 @Entity
 @Getter
@@ -19,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"categorias", "itemAdicionales", "comidas"})
+@ToString(exclude = {"categorias", "itemAdicionales"})
 public class Adicional {
 
     @Id
@@ -41,11 +41,6 @@ public class Adicional {
     @ManyToMany(mappedBy = "adicionales")
     @Builder.Default
     private List<Categoria> categorias = new ArrayList<>();
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "adicionalesDisponibles")
-    @Builder.Default
-    private List<Comida> comidas = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "adicional", cascade = CascadeType.ALL)

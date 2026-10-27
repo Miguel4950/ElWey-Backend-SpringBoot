@@ -1,11 +1,13 @@
 package com.elwey.restaurante.service;
 
+import com.elwey.restaurante.dto.DomiciliarioDto;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.CredencialesInvalidasException;
 import com.elwey.restaurante.errors.DomiciliarioNotFoundException;
 import com.elwey.restaurante.repository.DomiciliarioRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,114 +15,150 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Implementación de la capa de servicio para Domiciliario.
- * Gestiona la disponibilidad y el ciclo de vida del personal de reparto.
+ * Implementación del servicio de negocio para Domiciliarios y su Autenticación.
  */
+@Slf4j
 @Service
 public class DomiciliarioServiceImpl implements DomiciliarioService {
 
     @Autowired
-    private DomiciliarioRepository domiciliarioRepository;
+    private DomiciliarioRepository domiciliarioRepo;
 
     @Autowired
-    private PedidoRepository pedidoRepository;
+    private PedidoRepository pedidoRepo;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Domiciliario> searchAll() {
-        return domiciliarioRepository.findAll();
+    public List<Domiciliario> listarTodos() {
+        log.info("Listando todos los domiciliarios registrados");
+        return domiciliarioRepo.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Domiciliario> listarDisponibles() {
-        return domiciliarioRepository.findByDisponible(true);
+        log.info("Listando domiciliarios disponibles");
+        return domiciliarioRepo.findByDisponible(true);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Domiciliario searchById(Long id) {
-        return domiciliarioRepository.findById(id)
+    public Domiciliario obtenerPorId(Long id) {
+        log.info("Buscando domiciliario con ID: {}", id);
+        return domiciliarioRepo.findById(id)
                 .orElseThrow(() -> new DomiciliarioNotFoundException(id));
     }
 
     @Override
-    @Transactional
-    public Domiciliario save(Domiciliario domiciliario) {
-        if (domiciliario.getDisponible() == null) {
-            domiciliario.setDisponible(true);
+    @Transactional(readOnly = true)
+    public Domiciliario obtenerPorCedula(String cedula) {
+        log.info("Buscando domiciliario con cédula: {}", cedula);
+        if (cedula == null) {
+            return null;
         }
-        return domiciliarioRepository.save(domiciliario);
-    }
-
-    @Override
-    @Transactional
-    public Domiciliario actualizar(Long id, Domiciliario datos) {
-        Domiciliario existente = searchById(id);
-        if (datos.getCedula() != null && !datos.getCedula().isBlank()) {
-            existente.setCedula(datos.getCedula().trim());
-        }
-        if (datos.getNombre() != null && !datos.getNombre().isBlank()) {
-            existente.setNombre(datos.getNombre().trim());
-        }
-        if (datos.getCelular() != null && !datos.getCelular().isBlank()) {
-            existente.setCelular(datos.getCelular().trim());
-        }
-        if (datos.getContrasena() != null && !datos.getContrasena().isBlank()) {
-            existente.setContrasena(datos.getContrasena().trim());
-        }
-        if (datos.getDisponible() != null) {
-            existente.setDisponible(datos.getDisponible());
-        }
-        return domiciliarioRepository.save(existente);
-    }
-
-    @Override
-    @Transactional
-    public Domiciliario actualizarDisponibilidad(Long id, Boolean disponible) {
-        Domiciliario existente = searchById(id);
-        if (disponible != null) {
-            existente.setDisponible(disponible);
-        } else {
-            // Si viene nulo, invierte el estado actual
-            existente.setDisponible(!Boolean.TRUE.equals(existente.getDisponible()));
-        }
-        return domiciliarioRepository.save(existente);
-    }
-
-    @Override
-    @Transactional
-    public void delete(Long id) {
-        Domiciliario domiciliario = searchById(id);
-        // Desvincular de pedidos asociados para preservar integridad referencial sin errores de constraint
-        List<Pedido> pedidosAsociados = pedidoRepository.findByDomiciliarioId(id);
-        if (pedidosAsociados != null && !pedidosAsociados.isEmpty()) {
-            for (Pedido p : pedidosAsociados) {
-                p.setDomiciliario(null);
-                pedidoRepository.save(p);
-            }
-        }
-        domiciliarioRepository.delete(domiciliario);
+        return domiciliarioRepo.findByCedula(cedula.trim()).orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Domiciliario autenticar(String identificador, String contrasena) {
+    public DomiciliarioDto autenticar(String identificador, String contrasena) {
+        log.info("Autenticando domiciliario con identificador: {}", identificador);
+
         if (identificador == null || identificador.trim().isEmpty() || contrasena == null || contrasena.trim().isEmpty()) {
             throw new IllegalArgumentException("Debe proporcionar cédula o celular y contraseña.");
         }
 
         String limpio = identificador.trim();
 
-        // Buscar por cédula o por celular
-        Domiciliario domiciliario = domiciliarioRepository.findByCedula(limpio)
-                .or(() -> domiciliarioRepository.findByCelular(limpio))
-                .orElseThrow(() -> new CredencialesInvalidasException("Domiciliario no encontrado con la cédula o celular proporcionado."));
+        Domiciliario domiciliario = domiciliarioRepo.findByCedula(limpio)
+                .or(() -> domiciliarioRepo.findByCelular(limpio))
+                .orElse(null);
 
-        if (domiciliario.getContrasena() == null || !contrasena.equals(domiciliario.getContrasena())) {
-            throw new CredencialesInvalidasException("Contraseña incorrecta para el domiciliario.");
+        if (domiciliario != null && contrasena.equals(domiciliario.getContrasena())) {
+            return DomiciliarioDto.fromEntity(domiciliario);
+        } else {
+            throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu cédula o celular y contraseña.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Domiciliario guardar(Domiciliario domiciliario) {
+        log.info("Guardando domiciliario: {}", (domiciliario != null ? domiciliario.getNombre() : "null"));
+        if (domiciliario == null || domiciliario.getCedula() == null || domiciliario.getCedula().isBlank()) {
+            throw new IllegalArgumentException("La cédula no es válida.");
+        }
+        Domiciliario existente = obtenerPorCedula(domiciliario.getCedula());
+        if (existente != null) {
+            throw new IllegalArgumentException("La cédula ya está en uso.");
+        }
+        if (domiciliario.getDisponible() == null) {
+            domiciliario.setDisponible(true);
+        }
+        return domiciliarioRepo.save(domiciliario);
+    }
+
+    @Override
+    @Transactional
+    public Domiciliario actualizar(Long id, Domiciliario datosModificados) {
+        log.info("Actualizando domiciliario con ID: {}", id);
+        if (id == null) {
+            throw new IllegalArgumentException("Debe proporcionar un ID válido para actualizar el domiciliario.");
         }
 
-        return domiciliario;
+        Domiciliario actual = obtenerPorId(id);
+
+        if (datosModificados.getNombre() != null && !datosModificados.getNombre().isBlank()) {
+            actual.setNombre(datosModificados.getNombre().trim());
+        }
+        if (datosModificados.getCelular() != null && !datosModificados.getCelular().isBlank()) {
+            actual.setCelular(datosModificados.getCelular().trim());
+        }
+        if (datosModificados.getDisponible() != null) {
+            actual.setDisponible(datosModificados.getDisponible());
+        }
+
+        // Validar y actualizar cédula si cambió
+        if (datosModificados.getCedula() != null && !datosModificados.getCedula().isBlank()) {
+            String nuevaCedula = datosModificados.getCedula().trim();
+            if (!nuevaCedula.equalsIgnoreCase(actual.getCedula())) {
+                Domiciliario existente = obtenerPorCedula(nuevaCedula);
+                if (existente != null && !existente.getId().equals(id)) {
+                    throw new IllegalArgumentException("La cédula ya existe o no es válida.");
+                }
+                actual.setCedula(nuevaCedula);
+            }
+        }
+
+        return domiciliarioRepo.save(actual);
+    }
+
+    @Override
+    @Transactional
+    public Domiciliario actualizarDisponibilidad(Long id, Boolean disponible) {
+        log.info("Actualizando disponibilidad de domiciliario con ID: {} a {}", id, disponible);
+        Domiciliario existente = obtenerPorId(id);
+        if (disponible != null) {
+            existente.setDisponible(disponible);
+        } else {
+            existente.setDisponible(!Boolean.TRUE.equals(existente.getDisponible()));
+        }
+        return domiciliarioRepo.save(existente);
+    }
+
+    @Override
+    @Transactional
+    public void eliminar(Long id) {
+        log.info("Eliminando domiciliario con ID: {}", id);
+        Domiciliario domiciliario = obtenerPorId(id);
+
+        List<Pedido> pedidosAsociados = pedidoRepo.findByDomiciliarioId(id);
+        if (pedidosAsociados != null && !pedidosAsociados.isEmpty()) {
+            for (Pedido p : pedidosAsociados) {
+                p.setDomiciliario(null);
+                pedidoRepo.save(p);
+            }
+        }
+        domiciliarioRepo.delete(domiciliario);
     }
 }
