@@ -110,7 +110,7 @@ public class DataLoader implements CommandLineRunner {
                 comidas.add(new Comida(null, "Guacamole El Wey", 24500.0,
                                 "Aguacate Hass seleccionado machacado al momento en molcajete con tomate, jalapeño, cilantro y toque de limón. Servido con totopos artesanales crujientes.",
                                 "/images/comidas/guacamole-el-wey.jpg",
-                                "Vegano", true, catEntradas));
+                                "Vegetariano", true, catEntradas));
 
                 comidas.add(new Comida(null, "Enchiladas Rojas", 33900.0,
                                 "Tres tortillas de maíz rellenas de pechuga de pollo deshebrada, bañadas en salsa roja de chiles secos, cubiertas con crema ácida, queso fresco y cebolla morada.",
@@ -120,12 +120,12 @@ public class DataLoader implements CommandLineRunner {
                 comidas.add(new Comida(null, "Burrito Norteño", 36900.0,
                                 "Tortilla de harina gigante rellena de carne asada al carbón, frijoles refritos bayos, arroz a la mexicana, queso Chihuahua fundido y pico de gallo.",
                                 "/images/comidas/burrito-norteno.jpg",
-                                "Grande", true, catBurritos));
+                                "Tradicional", true, catBurritos));
 
                 comidas.add(new Comida(null, "Tacos de Suadero", 31500.0,
                                 "Corte suave de res confitado lentamente en su propia grasa estilo CDMX, picado al momento con cilantro criollo, cebolla y salsa taquera verde.",
                                 "/images/comidas/tacos-de-suadero.jpg",
-                                "Clásico", true, catTacos));
+                                "Tradicional", true, catTacos));
 
                 comidas.add(new Comida(null, "Nachos El Wey", 39900.0,
                                 "Cama abundante de totopos de maíz crujientes, frijoles refritos, abundante queso fundido Oaxaca y Cheddar, pico de gallo fresco, jalapeños en escabeche, crema ácida y guacamole especial.",
@@ -215,14 +215,14 @@ public class DataLoader implements CommandLineRunner {
                 };
 
                 String[] tagsExtra = {
-                                "Tradicional", "Costeño", "Estrella", "Yucateco",
-                                "Campestre", "Estrella", "Picante", "Casero",
-                                "Vegetariano", "Vegetariano", "Especial", "Frito",
-                                "Parrilla", "Especial", "Vegetariano", "Vegetariano",
-                                "Queso", "Dorado", "Rústico", "Fresco",
-                                "Estrella", "Patrio", "Artesanal", "Del Sur",
-                                "Al Carbón", "Horneado", "Caliente", "Abundante",
-                                "Estilo USA", "Deshebrada", "Pastor", "Vegetariano"
+                                "Tradicional", "Tradicional", "Estrella", "Tradicional",
+                                "Tradicional", "Estrella", "Picante", "Tradicional",
+                                "Vegetariano", "Vegetariano", "Tradicional", "Tradicional",
+                                "Estrella", "Picante", "Para Compartir", "Vegetariano",
+                                "Para Compartir", "Tradicional", "Tradicional", "Picante",
+                                "Estrella", "Estrella", "Picante", "Tradicional",
+                                "Estrella", "Tradicional", "Estrella", "Para Compartir",
+                                "Tradicional", "Picante", "Estrella", "Vegetariano"
                 };
 
                 for (int i = 0; i < nombresExtra.length; i++) {
