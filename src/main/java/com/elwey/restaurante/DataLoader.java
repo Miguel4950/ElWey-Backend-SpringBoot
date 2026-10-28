@@ -445,15 +445,15 @@ public class DataLoader implements CommandLineRunner {
                 // Domiciliarios
                 List<Domiciliario> domiciliarios = new ArrayList<>();
                 domiciliarios.add(Domiciliario.builder().cedula("1010203040").nombre("Carlos Gómez")
-                                .celular("+57 311 222 3333").contrasena("domi123").disponible(false).build());
+                                .celular("+57 311 222 3333").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1020304050").nombre("Andrés Parra")
-                                .celular("+57 312 444 5555").contrasena("domi123").disponible(false).build());
+                                .celular("+57 312 444 5555").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1030405060").nombre("Mateo Quintana")
                                 .celular("+57 315 666 7777").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1040506070").nombre("Javier Morales")
                                 .celular("+57 318 888 9999").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1050607080").nombre("Sebastián Roa")
-                                .celular("+57 320 111 2222").contrasena("domi123").disponible(true).build());
+                                .celular("+57 320 111 2222").contrasena("domi123").disponible(false).build());
 
                 for (Domiciliario d : domiciliarios) {
                         domiciliarioRepository.save(d);

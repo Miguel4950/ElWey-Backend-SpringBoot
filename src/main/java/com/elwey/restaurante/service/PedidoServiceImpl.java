@@ -177,16 +177,10 @@ public class PedidoServiceImpl implements PedidoService {
                     pedido.setDomiciliario(disponibles.get(0));
                 }
             }
-            if (pedido.getDomiciliario() != null) {
-                pedido.getDomiciliario().setDisponible(false);
-                domiciliarioRepository.save(pedido.getDomiciliario());
-            }
+            // La disponibilidad representa el turno laboral fijado manualmente por el operador
         } else if ("Entregado".equalsIgnoreCase(pedido.getEstado())) {
             pedido.setFechaEntrega(LocalDateTime.now());
-            if (pedido.getDomiciliario() != null) {
-                pedido.getDomiciliario().setDisponible(true);
-                domiciliarioRepository.save(pedido.getDomiciliario());
-            }
+            // La disponibilidad representa el turno laboral fijado manualmente por el operador
         }
 
         Pedido guardado = pedidoRepository.save(pedido);
