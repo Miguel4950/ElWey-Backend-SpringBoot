@@ -85,6 +85,14 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Pedido> findByDomiciliario(Long domiciliarioId) {
+        List<Pedido> pedidos = pedidoRepository.findByDomiciliarioId(domiciliarioId);
+        pedidos.forEach(this::calcularTotales);
+        return pedidos;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId) {
         Pedido pedido = searchById(pedidoId);
         return pedido.getItems().stream()

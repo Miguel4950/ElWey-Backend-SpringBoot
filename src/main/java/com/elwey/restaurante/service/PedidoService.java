@@ -18,6 +18,8 @@ public interface PedidoService {
 
     List<Pedido> findByCliente(Long clienteId);
 
+    List<Pedido> findByDomiciliario(Long domiciliarioId);
+
     List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId);
 
     Pedido crearPedido(CrearPedidoDto dto);

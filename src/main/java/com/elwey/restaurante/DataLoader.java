@@ -557,11 +557,11 @@ public class DataLoader implements CommandLineRunner {
                 itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item2Ped3)
                                 .adicional(adicionales.get(3)).cantidad(2).build());
 
-                // Pedido 4: James Rodríguez
+                // Pedido 4: James Rodríguez (Listo en barra, pre-asignado a Carlos Gómez)
                 Pedido ped4 = Pedido.builder()
                                 .cliente(james)
-                                .domiciliario(null)
-                                .estado("Cocinando")
+                                .domiciliario(domiciliarios.get(0))
+                                .estado("Listo")
                                 .fechaCreacion(LocalDateTime.now().minusMinutes(15))
                                 .build();
                 ped4 = pedidoRepository.save(ped4);
@@ -626,5 +626,23 @@ public class DataLoader implements CommandLineRunner {
                                 .adicional(adicionales.get(0)).cantidad(1).build());
                 itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped6)
                                 .adicional(adicionales.get(1)).cantidad(2).build());
+
+                // Pedido 7: Entregado previamente por Carlos Gómez (para historial de entregas)
+                Pedido ped7 = Pedido.builder()
+                                .cliente(falcao)
+                                .domiciliario(domiciliarios.get(0))
+                                .estado("Entregado")
+                                .fechaCreacion(LocalDateTime.now().minusHours(2))
+                                .fechaEntrega(LocalDateTime.now().minusHours(1))
+                                .build();
+                ped7 = pedidoRepository.save(ped7);
+
+                ItemPedido item1Ped7 = itemPedidoRepository.save(ItemPedido.builder()
+                                .pedido(ped7)
+                                .comida(comidas.get(0))
+                                .cantidad(3)
+                                .build());
+                itemPedidoAdicionalRepository.save(ItemPedidoAdicional.builder().itemPedido(item1Ped7)
+                                .adicional(adicionales.get(4)).cantidad(1).build());
         }
 }

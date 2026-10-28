@@ -59,6 +59,16 @@ public class PedidoController {
         return ResponseEntity.ok(dtos);
     }
 
+    @Operation(summary = "Consultar los pedidos asignados a un domiciliario")
+    @GetMapping("/domiciliario/{domiciliarioId}")
+    public ResponseEntity<List<PedidoDto>> mostrarPedidosPorDomiciliario(@PathVariable("domiciliarioId") Long domiciliarioId) {
+        log.info("Petición REST: consultando pedidos para domiciliario ID: {}", domiciliarioId);
+        List<PedidoDto> dtos = pedidoService.findByDomiciliario(domiciliarioId).stream()
+                .map(PedidoDto::fromEntity)
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
     @Operation(summary = "Obtener la lista detallada de platos e ingredientes adicionales (items) de un pedido")
     @GetMapping("/{id}/items")
     public ResponseEntity<List<ItemPedidoDto>> obtenerItemsDePedido(@PathVariable("id") Long id) {
