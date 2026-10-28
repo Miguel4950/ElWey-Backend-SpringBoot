@@ -67,13 +67,14 @@ public class DataLoader implements CommandLineRunner {
         public void run(String... args) throws Exception {
 
                 // 1. Crear 5 Categorías representativas del restaurante
-                String[] nombresCategorias = { "Tacos", "Quesadillas", "Entradas", "Especialidades", "Burritos" };
+                String[] nombresCategorias = { "Tacos", "Quesadillas", "Entradas", "Especialidades", "Burritos", "Bebidas" };
                 String[] descCategorias = {
                                 "Variedad de tacos tradicionales servidos en tortilla de maíz o harina con ingredientes frescos.",
                                 "Muestras de queso fundido e ingredientes variados en tortillas a la plancha.",
                                 "Platos ideales para comenzar la experiencia o compartir en la mesa.",
                                 "Platos insignia del restaurante preparados con recetas exclusivas de la casa.",
-                                "Tortillas de harina gigantes rellenas de carne, frijoles, arroz y complementos."
+                                "Tortillas de harina gigantes rellenas de carne, frijoles, arroz y complementos.",
+                                "Gaseosas frías, aguas frescas tradicionales y cervezas para acompañar tu orden."
                 };
 
                 List<Categoria> categorias = new ArrayList<>();
@@ -91,6 +92,7 @@ public class DataLoader implements CommandLineRunner {
                 Categoria catEntradas = categorias.get(2);
                 Categoria catEspecialidades = categorias.get(3);
                 Categoria catBurritos = categorias.get(4);
+                Categoria catBebidas = categorias.get(5);
 
                 // 2. Crear 40 Comidas auténticas (los 8 originales del Mockup + 32 platos
                 // adicionales)
@@ -230,6 +232,63 @@ public class DataLoader implements CommandLineRunner {
                                         "Auténtico plato de " + nombresExtra[i]
                                                         + " elaborado con ingredientes de la más alta calidad mexicana.",
                                         fotosExtra[i], tagsExtra[i], true, catAsignadaExtra[i]));
+                }
+
+                // Bebidas y Refrescos (Gaseosas populares y bebidas tradicionales mexicanas)
+                String[] nombresBebidas = {
+                                "Coca-Cola Original 400ml", "Coca-Cola Sin Azúcar 400ml",
+                                "Sprite Lima-Limón 400ml", "Postobón Manzana 400ml",
+                                "Colombiana La Nuestra 400ml", "Cuatro Toronja 400ml",
+                                "Agua de Horchata Tradicional", "Agua de Jamaica Casera",
+                                "Jarritos de Mandarina 370ml", "Jarritos de Tamarindo 370ml",
+                                "Cerveza Corona Extra 355ml", "Cerveza Negra Modelo 355ml"
+                };
+
+                Double[] preciosBebidas = {
+                                6800.0, 6800.0,
+                                6800.0, 5900.0,
+                                5900.0, 6800.0,
+                                8500.0, 7900.0,
+                                11500.0, 11500.0,
+                                12900.0, 13500.0
+                };
+
+                String[] fotosBebidas = {
+                                "/images/comidas/coca-cola.jpg", "/images/comidas/coca-cola-zero.jpg",
+                                "/images/comidas/sprite.jpg", "/images/comidas/postobon-manzana.jpg",
+                                "/images/comidas/colombiana.jpg", "/images/comidas/cuatro.jpg",
+                                "/images/comidas/agua-horchata.jpg", "/images/comidas/agua-jamaica.jpg",
+                                "/images/comidas/jarritos-mandarina.jpg", "/images/comidas/jarritos-tamarindo.jpg",
+                                "/images/comidas/cerveza-corona.jpg", "/images/comidas/cerveza-modelo.jpg"
+                };
+
+                String[] descBebidas = {
+                                "Gaseosa clásica servida bien fría con hielo y rodaja de limón.",
+                                "Todo el sabor original y burbujeante de Coca-Cola pero sin calorías.",
+                                "Gaseosa cristalina de sabor lima-limón 100% refrescante.",
+                                "El clásico y dulce sabor a manzana consentido de Colombia.",
+                                "Refresco sabor kola tradicional, el maridaje perfecto con comida mexicana.",
+                                "Gaseosa cítrica de toronja natural, ideal para acompañar tacos picantes.",
+                                "Bebida mexicana artesanal elaborada a base de arroz, leche, canela en rama y vainilla de Papantla.",
+                                "Infusión fría de flor de jamaica natural con un toque cítrico y endulzada al punto justo.",
+                                "Famoso refresco mexicano importado con sabor natural a mandarina jugosa.",
+                                "Auténtico refresco mexicano con pulpa de tamarindo agridulce y toque cítrico.",
+                                "Cerveza rubia tipo pilsner mexicana servida con su tradicional limón y sal marina.",
+                                "Cerveza mexicana tipo Munich oscura con notas tostadas de caramelo y malta."
+                };
+
+                String[] tagsBebidas = {
+                                "Tradicional", "Tradicional",
+                                "Tradicional", "Tradicional",
+                                "Tradicional", "Tradicional",
+                                "Estrella", "Tradicional",
+                                "Estrella", "Tradicional",
+                                "Estrella", "Estrella"
+                };
+
+                for (int i = 0; i < nombresBebidas.length; i++) {
+                        comidas.add(new Comida(null, nombresBebidas[i], preciosBebidas[i],
+                                        descBebidas[i], fotosBebidas[i], tagsBebidas[i], true, catBebidas));
                 }
 
                 for (Comida c : comidas) {
@@ -379,6 +438,7 @@ public class DataLoader implements CommandLineRunner {
                 categoriaRepository.save(catEntradas);
                 categoriaRepository.save(catEspecialidades);
                 categoriaRepository.save(catBurritos);
+                categoriaRepository.save(catBebidas);
 
                 // 6. Crear perfiles del personal del restaurante
 
