@@ -30,6 +30,7 @@ public class PedidoDto {
     private String clienteTelefono;
     private String clienteDireccion;
 
+    private Long domiciliarioId;
     private String domiciliarioNombre;
     private String domiciliarioCelular;
 
@@ -67,6 +68,7 @@ public class PedidoDto {
             cliDireccion = pedido.getCliente().getDireccion();
         }
 
+        Long domId = (pedido.getDomiciliario() != null) ? pedido.getDomiciliario().getId() : null;
         String domNombre = (pedido.getDomiciliario() != null) ? pedido.getDomiciliario().getNombre() : null;
         String domCelular = (pedido.getDomiciliario() != null) ? pedido.getDomiciliario().getCelular() : null;
 
@@ -90,6 +92,7 @@ public class PedidoDto {
                 .clienteCorreo(cliCorreo)
                 .clienteTelefono(cliTelefono)
                 .clienteDireccion(cliDireccion)
+                .domiciliarioId(domId)
                 .domiciliarioNombre(domNombre)
                 .domiciliarioCelular(domCelular)
                 .cantidadTotalProductos(pedido.getCantidadTotalProductos())
