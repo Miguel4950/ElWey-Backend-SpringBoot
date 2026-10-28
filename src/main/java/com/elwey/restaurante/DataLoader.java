@@ -97,42 +97,42 @@ public class DataLoader implements CommandLineRunner {
                 List<Comida> comidas = new ArrayList<>();
 
                 // Los 8 platos emblemáticos del Sprint 1 y 2
-                comidas.add(new Comida(null, "Tacos al Pastor", 18000.0,
+                comidas.add(new Comida(null, "Tacos al Pastor", 28900.0,
                                 "Carne de cerdo marinada en achiote tradicional, piña asada al carbón, cilantro fresco y cebolla en tortilla de maíz nixtamalizada.",
                                 "/images/comidas/tacos-al-pastor.jpg",
                                 "Estrella", true, catTacos));
 
-                comidas.add(new Comida(null, "Quesadilla de Birria", 22000.0,
+                comidas.add(new Comida(null, "Quesadilla de Birria", 34800.0,
                                 "Tortilla de maíz rellena de queso Oaxaca fundido y jugosa birria de res cocinada a fuego lento por 8 horas. Acompañada de consomé para sumergir.",
                                 "/images/comidas/quesadilla-de-birria.jpg",
                                 "Estrella", true, catQuesadillas));
 
-                comidas.add(new Comida(null, "Guacamole El Wey", 15000.0,
+                comidas.add(new Comida(null, "Guacamole El Wey", 24500.0,
                                 "Aguacate Hass seleccionado machacado al momento en molcajete con tomate, jalapeño, cilantro y toque de limón. Servido con totopos artesanales crujientes.",
                                 "/images/comidas/guacamole-el-wey.jpg",
                                 "Vegano", true, catEntradas));
 
-                comidas.add(new Comida(null, "Enchiladas Rojas", 20000.0,
+                comidas.add(new Comida(null, "Enchiladas Rojas", 33900.0,
                                 "Tres tortillas de maíz rellenas de pechuga de pollo deshebrada, bañadas en salsa roja de chiles secos, cubiertas con crema ácida, queso fresco y cebolla morada.",
                                 "/images/comidas/enchiladas-rojas.jpg",
                                 "Estrella", true, catEspecialidades));
 
-                comidas.add(new Comida(null, "Burrito Norteño", 24000.0,
+                comidas.add(new Comida(null, "Burrito Norteño", 36900.0,
                                 "Tortilla de harina gigante rellena de carne asada al carbón, frijoles refritos bayos, arroz a la mexicana, queso Chihuahua fundido y pico de gallo.",
                                 "/images/comidas/burrito-norteno.jpg",
                                 "Grande", true, catBurritos));
 
-                comidas.add(new Comida(null, "Tacos de Suadero", 19000.0,
+                comidas.add(new Comida(null, "Tacos de Suadero", 31500.0,
                                 "Corte suave de res confitado lentamente en su propia grasa estilo CDMX, picado al momento con cilantro criollo, cebolla y salsa taquera verde.",
                                 "/images/comidas/tacos-de-suadero.jpg",
                                 "Clásico", true, catTacos));
 
-                comidas.add(new Comida(null, "Nachos El Wey", 23000.0,
+                comidas.add(new Comida(null, "Nachos El Wey", 39900.0,
                                 "Cama abundante de totopos de maíz crujientes, frijoles refritos, abundante queso fundido Oaxaca y Cheddar, pico de gallo fresco, jalapeños en escabeche, crema ácida y guacamole especial.",
                                 "/images/comidas/nachos-el-wey.jpg",
                                 "Para Compartir", true, catEntradas));
 
-                comidas.add(new Comida(null, "Gringa con Carne (la favorita de jaimes)", 21000.0,
+                comidas.add(new Comida(null, "Gringa con Carne (la favorita de jaimes)", 32800.0,
                                 "Deliciosa quesadilla en tortilla de harina dorada a la plancha con mantequilla, rellena de abundante carne al pastor, queso Oaxaca derretido, piña asada caramelizada y cilantro fresco.",
                                 "/images/comidas/gringa-con-carne.jpg",
                                 "Estrella", true, catQuesadillas));
@@ -158,14 +158,14 @@ public class DataLoader implements CommandLineRunner {
                 };
 
                 Double[] preciosExtra = {
-                                19500.0, 23000.0, 25000.0, 20000.0,
-                                22500.0, 28000.0, 18500.0, 21000.0,
-                                16000.0, 17000.0, 18000.0, 19000.0,
-                                24000.0, 19500.0, 14000.0, 12000.0,
-                                19000.0, 17500.0, 18000.0, 16500.0,
-                                32000.0, 26000.0, 27000.0, 14000.0,
-                                29000.0, 26000.0, 27500.0, 28000.0,
-                                25000.0, 22000.0, 23500.0, 20000.0
+                                29900.0, 35900.0, 38900.0, 31900.0,
+                                34500.0, 44900.0, 27900.0, 32500.0,
+                                26900.0, 27500.0, 28900.0, 29800.0,
+                                37900.0, 30500.0, 23900.0, 19800.0,
+                                31900.0, 28900.0, 29500.0, 27800.0,
+                                48900.0, 39500.0, 41900.0, 22500.0,
+                                45900.0, 39900.0, 42800.0, 43900.0,
+                                38900.0, 33900.0, 35800.0, 31500.0
                 };
 
                 String[] fotosExtra = {
@@ -287,43 +287,43 @@ public class DataLoader implements CommandLineRunner {
                 List<Adicional> adicionales = new ArrayList<>();
 
                 // Tacos extras
-                adicionales.add(Adicional.builder().nombre("Cebollitas Cambray Asadas").precio(3000.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Cebollitas Cambray Asadas").precio(4900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Salsa Habanera Tatemada Extra").precio(2500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Salsa Habanera Tatemada Extra").precio(3900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Porción Piña Asada Caramelizada").precio(2000.0)
+                adicionales.add(Adicional.builder().nombre("Porción Piña Asada Caramelizada").precio(3500.0)
                                 .activo(true).build());
 
                 // Quesadillas extras
-                adicionales.add(Adicional.builder().nombre("Queso Oaxaca Extra Fundido").precio(4500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Queso Oaxaca Extra Fundido").precio(6900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Guacamole Tradicional Extra").precio(4000.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Guacamole Tradicional Extra").precio(6500.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Chorizo Casero a la Plancha").precio(4500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Chorizo Casero a la Plancha").precio(6900.0).activo(true)
                                 .build());
 
                 // Entradas extras
-                adicionales.add(Adicional.builder().nombre("Totopos Artesanales Crujientes").precio(3500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Totopos Artesanales Crujientes").precio(5500.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Pico de Gallo Fresco Casero").precio(2500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Pico de Gallo Fresco Casero").precio(3900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Crema Ácida Mexicana Especial").precio(2500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Crema Ácida Mexicana Especial").precio(3900.0).activo(true)
                                 .build());
 
                 // Especialidades extras
-                adicionales.add(Adicional.builder().nombre("Consomé de Birria para Sumergir").precio(5000.0)
+                adicionales.add(Adicional.builder().nombre("Consomé de Birria para Sumergir").precio(7900.0)
                                 .activo(true).build());
-                adicionales.add(Adicional.builder().nombre("Frijoles Refritos Bayos").precio(3500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Frijoles Refritos Bayos").precio(5500.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Chicharrón de Cerdo Crujiente").precio(4500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Chicharrón de Cerdo Crujiente").precio(6900.0).activo(true)
                                 .build());
 
                 // Burritos extras
-                adicionales.add(Adicional.builder().nombre("Arroz Rojo a la Mexicana").precio(3000.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Arroz Rojo a la Mexicana").precio(4900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Jalapeños en Escabeche Caseros").precio(2500.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Jalapeños en Escabeche Caseros").precio(3900.0).activo(true)
                                 .build());
-                adicionales.add(Adicional.builder().nombre("Salsa Verde Taquera Extra").precio(2000.0).activo(true)
+                adicionales.add(Adicional.builder().nombre("Salsa Verde Taquera Extra").precio(3500.0).activo(true)
                                 .build());
 
                 for (int i = 0; i < adicionales.size(); i++) {
