@@ -105,7 +105,7 @@ public class DataLoader implements CommandLineRunner {
                 comidas.add(new Comida(null, "Quesadilla de Birria", 22000.0,
                                 "Tortilla de maíz rellena de queso Oaxaca fundido y jugosa birria de res cocinada a fuego lento por 8 horas. Acompañada de consomé para sumergir.",
                                 "/images/comidas/quesadilla-de-birria.jpg",
-                                "Top Ventas", true, catQuesadillas));
+                                "Estrella", true, catQuesadillas));
 
                 comidas.add(new Comida(null, "Guacamole El Wey", 15000.0,
                                 "Aguacate Hass seleccionado machacado al momento en molcajete con tomate, jalapeño, cilantro y toque de limón. Servido con totopos artesanales crujientes.",
@@ -115,7 +115,7 @@ public class DataLoader implements CommandLineRunner {
                 comidas.add(new Comida(null, "Enchiladas Rojas", 20000.0,
                                 "Tres tortillas de maíz rellenas de pechuga de pollo deshebrada, bañadas en salsa roja de chiles secos, cubiertas con crema ácida, queso fresco y cebolla morada.",
                                 "/images/comidas/enchiladas-rojas.jpg",
-                                "Recomendado", true, catEspecialidades));
+                                "Estrella", true, catEspecialidades));
 
                 comidas.add(new Comida(null, "Burrito Norteño", 24000.0,
                                 "Tortilla de harina gigante rellena de carne asada al carbón, frijoles refritos bayos, arroz a la mexicana, queso Chihuahua fundido y pico de gallo.",
@@ -135,7 +135,7 @@ public class DataLoader implements CommandLineRunner {
                 comidas.add(new Comida(null, "Gringa con Carne (la favorita de jaimes)", 21000.0,
                                 "Deliciosa quesadilla en tortilla de harina dorada a la plancha con mantequilla, rellena de abundante carne al pastor, queso Oaxaca derretido, piña asada caramelizada y cilantro fresco.",
                                 "/images/comidas/gringa-con-carne.jpg",
-                                "Favorito", true, catQuesadillas));
+                                "Estrella", true, catQuesadillas));
 
                 // Platos 9 al 40 (32 platillos mexicanos adicionales)
                 String[] nombresExtra = {
@@ -215,14 +215,14 @@ public class DataLoader implements CommandLineRunner {
                 };
 
                 String[] tagsExtra = {
-                                "Tradicional", "Costeño", "Mariscos", "Yucateco",
-                                "Campestre", "Gourmet", "Picante", "Casero",
-                                "Vegetariano", "Ligero", "Especial", "Frito",
-                                "Parrilla", "Sabor Único", "Crujiente", "Callejero",
+                                "Tradicional", "Costeño", "Estrella", "Yucateco",
+                                "Campestre", "Estrella", "Picante", "Casero",
+                                "Vegetariano", "Vegetariano", "Especial", "Frito",
+                                "Parrilla", "Especial", "Vegetariano", "Vegetariano",
                                 "Queso", "Dorado", "Rústico", "Fresco",
-                                "Poblano", "Patrio", "Artesanal", "Del Sur",
+                                "Estrella", "Patrio", "Artesanal", "Del Sur",
                                 "Al Carbón", "Horneado", "Caliente", "Abundante",
-                                "Estilo USA", "Deshebrada", "Pastor", "Saludable"
+                                "Estilo USA", "Deshebrada", "Pastor", "Vegetariano"
                 };
 
                 for (int i = 0; i < nombresExtra.length; i++) {
