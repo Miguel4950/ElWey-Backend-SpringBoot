@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.elwey.restaurante.dto.CategoriaAdicionalesRequest;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
@@ -18,6 +19,7 @@ import com.elwey.restaurante.repository.ComidaRepository;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -89,7 +91,20 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     @Transactional
-    public List<Adicional> actualizarAdicionales(Long categoriaId, List<Long> adicionalIds) {
+    public void actualizarAdicionales(CategoriaAdicionalesRequest request) {
+        if (request == null || request.getCategoriaId() == null || request.getAdicionalesIds() == null) {
+            throw new IllegalArgumentException("Debe indicar categoriaId y la lista de adicionales.");
+        }
+
+        Long categoriaId = request.getCategoriaId();
+        List<Long> adicionalIds = request.getAdicionalesIds();
+        if (adicionalIds.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("La lista de adicionales no puede contener IDs nulos.");
+        }
+
+        log.info("Petición REST: actualizar adicionales de la categoría ID: {} ({} seleccionados)",
+                categoriaId, adicionalIds.size());
+
         Categoria categoria = repo.findById(categoriaId)
                 .orElseThrow(() -> new CategoriaNotFoundException(categoriaId));
 
@@ -125,6 +140,6 @@ public class CategoriaServiceImpl implements CategoriaService {
         }
 
         repo.save(categoria);
-        return categoria.getAdicionales();
     }
+
 }

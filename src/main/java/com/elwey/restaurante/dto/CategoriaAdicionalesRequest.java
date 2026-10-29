@@ -12,13 +12,5 @@ import java.util.List;
 public class CategoriaAdicionalesRequest {
 
     private Long categoriaId;
-    private List<AdicionalSeleccionRequest> adicionales;
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    public static class AdicionalSeleccionRequest {
-        private Long id;
-        private Boolean seleccionado;
-    }
+    private List<Long> adicionalesIds;
 }
