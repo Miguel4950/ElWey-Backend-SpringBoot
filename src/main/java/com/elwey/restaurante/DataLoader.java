@@ -1,5 +1,7 @@
 package com.elwey.restaurante;
 
+import org.springframework.context.annotation.Profile;
+
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Administrador;
 import com.elwey.restaurante.entities.Categoria;
@@ -29,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Profile("!test")
 @Component
 @Transactional
 public class DataLoader implements CommandLineRunner {
