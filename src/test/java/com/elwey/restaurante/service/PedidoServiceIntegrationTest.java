@@ -2,6 +2,7 @@ package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.dto.CrearPedidoDto;
 import com.elwey.restaurante.entities.*;
+import com.elwey.restaurante.errors.PedidoNotFoundException;
 import com.elwey.restaurante.repository.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * Pruebas de integración del servicio de Pedido (Semana 13).
  * Pruebas reales que interactúan con la base de datos H2 en memoria SIN MOCKS.
+ * Valida la persistencia real, cascada de relaciones, cálculo transaccional y reglas de negocio.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -129,11 +131,18 @@ public class PedidoServiceIntegrationTest {
         Assertions.assertThat(pedidoCreado.getEstado()).isEqualTo("Cocinando");
         Assertions.assertThat(pedidoCreado.getCliente().getId()).isEqualTo(cliente.getId());
         Assertions.assertThat(pedidoCreado.getItems()).hasSize(1);
+
+        // Aserciones sobre totales calculados por la lógica de negocio
+        Assertions.assertThat(pedidoCreado.getSubtotalComida()).isEqualTo(50000.0);
+        Assertions.assertThat(pedidoCreado.getSubtotalAdicionales()).isEqualTo(5000.0);
+        Assertions.assertThat(pedidoCreado.getCantidadTotalProductos()).isEqualTo(2);
+        Assertions.assertThat(pedidoCreado.getCantidadTotalAdicionales()).isEqualTo(1);
         Assertions.assertThat(pedidoCreado.getTotal()).isEqualTo(55000.0);
     }
 
     /**
      * Prueba 2: Consultar un pedido previamente persistido por su ID.
+     * Valida la recuperación exitosa y el lanzamiento de excepción si el pedido no existe.
      */
     @Test
     public void searchById_retornaPedidoExistente() {
@@ -150,17 +159,21 @@ public class PedidoServiceIntegrationTest {
                 .build();
         Pedido nuevo = pedidoService.crearPedido(pedidoRequest);
 
-        // Act
+        // Act & Assert 1: Búsqueda exitosa
         Pedido encontrado = pedidoService.searchById(nuevo.getId());
-
-        // Assert
         Assertions.assertThat(encontrado).isNotNull();
         Assertions.assertThat(encontrado.getId()).isEqualTo(nuevo.getId());
         Assertions.assertThat(encontrado.getEstado()).isEqualTo("Cocinando");
+        Assertions.assertThat(encontrado.getTotal()).isEqualTo(25000.0);
+
+        // Act & Assert 2: Excepción ante ID inexistente
+        Assertions.assertThatThrownBy(() -> pedidoService.searchById(99999L))
+                .isInstanceOf(PedidoNotFoundException.class);
     }
 
     /**
      * Prueba 3: Actualizar el estado de un pedido a 'Enviado' y asignar un domiciliario.
+     * Valida la transición operativa y la persistencia de la asignación.
      */
     @Test
     public void actualizarEstado_cambiaEstadoAEnviadoYAsignaDomiciliario() {
@@ -184,11 +197,13 @@ public class PedidoServiceIntegrationTest {
         Assertions.assertThat(despachado).isNotNull();
         Assertions.assertThat(despachado.getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(despachado.getDomiciliario()).isNotNull();
+        Assertions.assertThat(despachado.getDomiciliario().getId()).isEqualTo(domiciliario.getId());
         Assertions.assertThat(despachado.getDomiciliario().getNombre()).isEqualTo("Andrés Parra");
     }
 
     /**
      * Prueba 4: Actualizar el estado de un pedido a 'Entregado' fija automáticamente la fecha de entrega.
+     * Valida la regla de negocio temporal del ciclo de vida del pedido.
      */
     @Test
     public void actualizarEstado_entregadoFijaFechaEntrega() {
@@ -204,6 +219,7 @@ public class PedidoServiceIntegrationTest {
                 ))
                 .build();
         Pedido creado = pedidoService.crearPedido(pedidoRequest);
+        Assertions.assertThat(creado.getFechaEntrega()).isNull();
 
         // Act
         Pedido entregado = pedidoService.actualizarEstado(creado.getId(), "Entregado", null);
@@ -212,14 +228,16 @@ public class PedidoServiceIntegrationTest {
         Assertions.assertThat(entregado).isNotNull();
         Assertions.assertThat(entregado.getEstado()).isEqualTo("Entregado");
         Assertions.assertThat(entregado.getFechaEntrega()).isNotNull();
+        Assertions.assertThat(entregado.getFechaEntrega()).isAfterOrEqualTo(creado.getFechaCreacion());
     }
 
     /**
      * Prueba 5: Consultar la lista de pedidos asociados a un cliente en la base de datos real.
+     * Valida el aislamiento estricto entre clientes sin fuga de pedidos ajenos.
      */
     @Test
     public void findByCliente_retornaPedidosAsociadosAlCliente() {
-        // Arrange: Crear 2 pedidos para el cliente Falcao
+        // Arrange: Crear 2 pedidos para Falcao
         CrearPedidoDto pedido1 = CrearPedidoDto.builder()
                 .clienteId(cliente.getId())
                 .items(List.of(
@@ -242,11 +260,37 @@ public class PedidoServiceIntegrationTest {
         pedidoService.crearPedido(pedido1);
         pedidoService.crearPedido(pedido2);
 
-        // Act
-        List<Pedido> pedidosCliente = pedidoService.findByCliente(cliente.getId());
+        // Crear 1 pedido para un segundo cliente (James)
+        Cliente otroCliente = clienteRepository.save(
+                Cliente.builder()
+                        .nombre("James")
+                        .apellido("Rodríguez")
+                        .email("james@elwey.com")
+                        .password("diez123")
+                        .telefono("3115556677")
+                        .direccion("Calle 10 #5-20")
+                        .activo(true)
+                        .build()
+        );
+        CrearPedidoDto pedidoJames = CrearPedidoDto.builder()
+                .clienteId(otroCliente.getId())
+                .items(List.of(
+                        CrearPedidoDto.ItemPedidoRequestDto.builder()
+                                .comidaId(comidaTaco.getId())
+                                .cantidad(1)
+                                .build()
+                ))
+                .build();
+        pedidoService.crearPedido(pedidoJames);
 
-        // Assert
-        Assertions.assertThat(pedidosCliente).isNotNull();
-        Assertions.assertThat(pedidosCliente.size()).isEqualTo(2);
+        // Act
+        List<Pedido> pedidosFalcao = pedidoService.findByCliente(cliente.getId());
+        List<Pedido> pedidosJames = pedidoService.findByCliente(otroCliente.getId());
+
+        // Assert: Falcao tiene exactamente 2 pedidos y James tiene 1
+        Assertions.assertThat(pedidosFalcao).hasSize(2);
+        Assertions.assertThat(pedidosFalcao).allMatch(p -> p.getCliente().getId().equals(cliente.getId()));
+        Assertions.assertThat(pedidosJames).hasSize(1);
+        Assertions.assertThat(pedidosJames.get(0).getCliente().getId()).isEqualTo(otroCliente.getId());
     }
 }

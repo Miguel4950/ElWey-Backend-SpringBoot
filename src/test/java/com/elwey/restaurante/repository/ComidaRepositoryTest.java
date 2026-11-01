@@ -15,6 +15,7 @@ import java.util.Optional;
 /**
  * Pruebas unitarias para el CRUD de un Repositorio (Semana 13).
  * Sigue el patrón Arrange - Act - Assert con @DataJpaTest y AssertJ.
+ * Valida persistencia, mapeo relacional, unicidad, integridad y operaciones CRUD.
  */
 @DataJpaTest
 @ActiveProfiles("test")
@@ -52,6 +53,11 @@ public class ComidaRepositoryTest {
         );
     }
 
+    /**
+     * Prueba 1 [CREATE]: Guardar una nueva entidad Comida.
+     * Valida que se genere el ID autoincremental, los valores se persistan con exactitud
+     * y la relación ManyToOne con Categoria quede correctamente vinculada.
+     */
     @Test
     public void comidaRepository_save_retornaComidaGuardada() {
         // Arrange
@@ -70,30 +76,49 @@ public class ComidaRepositoryTest {
 
         // Assert
         Assertions.assertThat(guardada).isNotNull();
-        Assertions.assertThat(guardada.getId()).isNotNull();
+        Assertions.assertThat(guardada.getId()).isNotNull().isPositive();
         Assertions.assertThat(guardada.getNombre()).isEqualTo("Tacos de Suadero");
+        Assertions.assertThat(guardada.getPrecio()).isEqualTo(31500.0);
+        Assertions.assertThat(guardada.getActivo()).isTrue();
+        Assertions.assertThat(guardada.getCategoria()).isNotNull();
+        Assertions.assertThat(guardada.getCategoria().getId()).isEqualTo(categoriaTacos.getId());
     }
 
+    /**
+     * Prueba 2 [READ ALL]: Consultar todas las entidades activas en el repositorio.
+     * Valida que retorne una lista no vacía y que contenga los elementos previamente persistidos.
+     */
     @Test
     public void comidaRepository_findAll_retornaListaNoVacia() {
         // Act
         List<Comida> comidas = comidaRepository.findAll();
 
         // Assert
-        Assertions.assertThat(comidas).isNotNull();
-        Assertions.assertThat(comidas.size()).isGreaterThan(0);
-        Assertions.assertThat(comidas).contains(comidaInicial);
+        Assertions.assertThat(comidas).isNotNull().isNotEmpty();
+        Assertions.assertThat(comidas.size()).isGreaterThanOrEqualTo(1);
+        Assertions.assertThat(comidas).extracting(Comida::getNombre).contains("Tacos al Pastor");
+        Assertions.assertThat(comidas).extracting(c -> c.getCategoria().getNombre()).contains("Tacos");
     }
 
+    /**
+     * Prueba 3 [READ BY ID - Caso Negativo]: Buscar una entidad inexistente.
+     * Valida que el repositorio retorne Optional.empty() sin lanzar excepciones inesperadas.
+     */
     @Test
     public void comidaRepository_findById_retornaVacioCuandoNoExiste() {
         // Act
         Optional<Comida> comida = comidaRepository.findById(-1L);
+        Optional<Comida> comidaIdInexistente = comidaRepository.findById(99999L);
 
         // Assert
         Assertions.assertThat(comida).isEmpty();
+        Assertions.assertThat(comidaIdInexistente).isEmpty();
     }
 
+    /**
+     * Prueba 4 [UPDATE]: Modificar campos de una entidad existente y persistir cambios.
+     * Valida que la actualización persista tanto en la entidad devuelta como en la base de datos física.
+     */
     @Test
     public void comidaRepository_update_modificaComida() {
         // Arrange
@@ -101,26 +126,42 @@ public class ComidaRepositoryTest {
         Assertions.assertThat(comidaExistente).isNotNull();
         comidaExistente.setNombre("Tacos al Pastor Especiales");
         comidaExistente.setPrecio(32000.0);
+        comidaExistente.setEtiqueta("Edición Limitada");
 
         // Act
         Comida comidaActualizada = comidaRepository.save(comidaExistente);
 
         // Assert
         Assertions.assertThat(comidaActualizada).isNotNull();
+        Assertions.assertThat(comidaActualizada.getId()).isEqualTo(comidaInicial.getId());
         Assertions.assertThat(comidaActualizada.getNombre()).isEqualTo("Tacos al Pastor Especiales");
         Assertions.assertThat(comidaActualizada.getPrecio()).isEqualTo(32000.0);
+        Assertions.assertThat(comidaActualizada.getEtiqueta()).isEqualTo("Edición Limitada");
+
+        // Verificación de recarga desde BD
+        Comida recargada = comidaRepository.findById(comidaInicial.getId()).orElse(null);
+        Assertions.assertThat(recargada).isNotNull();
+        Assertions.assertThat(recargada.getNombre()).isEqualTo("Tacos al Pastor Especiales");
+        Assertions.assertThat(recargada.getPrecio()).isEqualTo(32000.0);
     }
 
+    /**
+     * Prueba 5 [DELETE]: Eliminar una entidad por su identificador.
+     * Valida que tras la eliminación física, la búsqueda por ID resulte vacía y disminuya el conteo.
+     */
     @Test
     public void comidaRepository_delete_eliminaComida() {
         // Arrange
         Long id = comidaInicial.getId();
+        long totalAntes = comidaRepository.count();
 
         // Act
         comidaRepository.deleteById(id);
         Optional<Comida> comidaEliminada = comidaRepository.findById(id);
+        long totalDespues = comidaRepository.count();
 
         // Assert
         Assertions.assertThat(comidaEliminada).isEmpty();
+        Assertions.assertThat(totalDespues).isEqualTo(totalAntes - 1L);
     }
 }

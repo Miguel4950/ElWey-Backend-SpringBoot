@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Pruebas unitarias para las 5 consultas personalizadas creadas con @Query (Semana 13).
  * Valida consultas SQL/JPQL escritas a mano con parámetros, filtros, joins y funciones de agregación.
+ * Incluye pruebas de lógica tanto positivas como de frontera/negativas para cada consulta.
  */
 @DataJpaTest
 @ActiveProfiles("test")
@@ -134,36 +135,47 @@ public class ConsultasPersonalizadasQueryTest {
 
     /**
      * Consulta 1: @Query para buscar pedidos por estado y domiciliario asignado.
+     * Valida la concordancia exacta de ambos predicados (AND) y la exclusión de otros estados.
      */
     @Test
     public void testQuery_findPedidosPorEstadoYDomiciliario_retornaPedidosFiltrados() {
-        // Act
+        // Caso Positivo: Carlos Gómez con pedido "Enviado"
         List<Pedido> resultado = pedidoRepository.findPedidosPorEstadoYDomiciliario("Enviado", domiciliarioCarlos.getId());
 
-        // Assert
-        Assertions.assertThat(resultado).isNotNull();
-        Assertions.assertThat(resultado.size()).isEqualTo(1);
+        Assertions.assertThat(resultado).isNotNull().hasSize(1);
         Assertions.assertThat(resultado.get(0).getId()).isEqualTo(pedido1.getId());
+        Assertions.assertThat(resultado.get(0).getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(resultado.get(0).getDomiciliario().getNombre()).isEqualTo("Carlos Gómez");
+
+        // Casos Negativos: Carlos no tiene pedidos "Entregado", y un domiciliario inexistente no tiene pedidos
+        List<Pedido> pedidosEntregados = pedidoRepository.findPedidosPorEstadoYDomiciliario("Entregado", domiciliarioCarlos.getId());
+        Assertions.assertThat(pedidosEntregados).isEmpty();
+
+        List<Pedido> pedidosDomiInexistente = pedidoRepository.findPedidosPorEstadoYDomiciliario("Enviado", 99999L);
+        Assertions.assertThat(pedidosDomiInexistente).isEmpty();
     }
 
     /**
-     * Consulta 2: @Query para buscar pedidos por el email del cliente (con JOIN implícito y LOWER).
+     * Consulta 2: @Query para buscar pedidos por el email del cliente (con JOIN y LOWER).
+     * Valida que no distinga entre mayúsculas y minúsculas y que no devuelva pedidos ajenos.
      */
     @Test
     public void testQuery_findPedidosPorClienteEmail_retornaPedidosDelCliente() {
-        // Act
+        // Caso Positivo: Búsqueda con email en mayúsculas
         List<Pedido> resultado = pedidoRepository.findPedidosPorClienteEmail("JUAN.PEREZ@ELWEY.COM");
 
-        // Assert
-        Assertions.assertThat(resultado).isNotNull();
-        Assertions.assertThat(resultado.size()).isEqualTo(2);
+        Assertions.assertThat(resultado).isNotNull().hasSize(2);
         Assertions.assertThat(resultado).extracting(p -> p.getCliente().getEmail())
                 .containsOnly("juan.perez@elwey.com");
+
+        // Caso Negativo: Email no registrado en el sistema
+        List<Pedido> resultadoVacio = pedidoRepository.findPedidosPorClienteEmail("cliente.fantasma@elwey.com");
+        Assertions.assertThat(resultadoVacio).isEmpty();
     }
 
     /**
      * Consulta 3: @Query con función de agregación COUNT para conteo de pedidos por estado.
+     * Valida que la suma de estados coincida exactamente con la población de pedidos en base de datos.
      */
     @Test
     public void testQuery_countPedidosPorEstado_retornaConteoCorrecto() {
@@ -171,41 +183,57 @@ public class ConsultasPersonalizadasQueryTest {
         Long cocinando = pedidoRepository.countPedidosPorEstado("Cocinando");
         Long enviado = pedidoRepository.countPedidosPorEstado("Enviado");
         Long entregado = pedidoRepository.countPedidosPorEstado("Entregado");
+        Long cancelado = pedidoRepository.countPedidosPorEstado("Cancelado");
 
         // Assert
         Assertions.assertThat(cocinando).isEqualTo(1L);
         Assertions.assertThat(enviado).isEqualTo(1L);
         Assertions.assertThat(entregado).isEqualTo(0L);
+        Assertions.assertThat(cancelado).isEqualTo(0L);
     }
 
     /**
      * Consulta 4: @Query para filtrar comidas activas con precio mayor o igual al parámetro.
+     * Valida tanto la cota inferior de precio como la exclusión estricta de platos inactivos (soft delete).
      */
     @Test
     public void testQuery_findComidasConPrecioMayorOIgual_retornaComidasActivasFiltradas() {
-        // Act
+        // Act 1: Con umbral de 30000.0 -> solo Suadero (31500) cumple
         List<Comida> comidasCaras = comidaRepository.findComidasConPrecioMayorOIgual(30000.0);
 
-        // Assert
-        // Solo "Tacos de Suadero" (31500) cumple: "Tacos al Pastor" cuesta 28900 (< 30000)
-        // y "Tacos Descontinuados" cuesta 35000 pero tiene activo = false
-        Assertions.assertThat(comidasCaras).isNotNull();
-        Assertions.assertThat(comidasCaras.size()).isEqualTo(1);
+        Assertions.assertThat(comidasCaras).isNotNull().hasSize(1);
         Assertions.assertThat(comidasCaras.get(0).getNombre()).isEqualTo("Tacos de Suadero");
+        Assertions.assertThat(comidasCaras.get(0).getActivo()).isTrue();
+
+        // Act 2: Con umbral de 20000.0 -> Pastor (28900) y Suadero (31500) cumplen
+        // Tacos Descontinuados (35000) tiene precio suficiente, pero DEBE excluirse por activo = false
+        List<Comida> todasActivas = comidaRepository.findComidasConPrecioMayorOIgual(20000.0);
+        Assertions.assertThat(todasActivas).hasSize(2);
+        Assertions.assertThat(todasActivas).extracting(Comida::getNombre)
+                .containsExactlyInAnyOrder("Tacos al Pastor", "Tacos de Suadero");
+        Assertions.assertThat(todasActivas).extracting(Comida::getActivo)
+                .containsOnly(true);
     }
 
     /**
-     * Consulta 5: @Query con filtro compuesto por nombre de categoría y etiqueta oficial.
+     * Consulta 5: @Query con filtro compuesto por nombre de categoría y etiqueta gastronómica.
+     * Valida filtrado relacional sensible al contexto e insensible a mayúsculas/minúsculas.
      */
     @Test
     public void testQuery_findComidasPorCategoriaYEtiqueta_retornaComidaExacta() {
-        // Act
+        // Caso Positivo: Categoría "tacos" y etiqueta "estrella" en minúsculas
         List<Comida> resultado = comidaRepository.findComidasPorCategoriaYEtiqueta("tacos", "estrella");
 
-        // Assert
-        Assertions.assertThat(resultado).isNotNull();
-        Assertions.assertThat(resultado.size()).isEqualTo(1);
+        Assertions.assertThat(resultado).isNotNull().hasSize(1);
         Assertions.assertThat(resultado.get(0).getNombre()).isEqualTo("Tacos al Pastor");
         Assertions.assertThat(resultado.get(0).getEtiqueta()).isEqualTo("Estrella");
+
+        // Caso Negativo: Categoría existente con etiqueta inexistente
+        List<Comida> resultadoInexistente = comidaRepository.findComidasPorCategoriaYEtiqueta("tacos", "Vegano");
+        Assertions.assertThat(resultadoInexistente).isEmpty();
+
+        // Caso Negativo: Categoría inexistente
+        List<Comida> categoriaInexistente = comidaRepository.findComidasPorCategoriaYEtiqueta("Bebidas", "Estrella");
+        Assertions.assertThat(categoriaInexistente).isEmpty();
     }
 }

@@ -17,10 +17,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * Pruebas unitarias de Servicio con Mocks (Semana 13).
  * Aísla la lógica de negocio simulando el comportamiento de los repositorios con Mockito.
+ * Valida validaciones de entrada, cálculos matemáticos, reglas de despacho y cobertura de caminos críticos.
  */
 @ExtendWith(MockitoExtension.class)
 public class PedidoServiceMockTest {
@@ -50,7 +53,8 @@ public class PedidoServiceMockTest {
     private PedidoServiceImpl pedidoService;
 
     /**
-     * Prueba 1: Valida que crear un pedido con un cliente inexistente lance ClienteNotFoundException.
+     * Prueba 1: Valida que crear un pedido con un cliente inexistente lance ClienteNotFoundException
+     * y garantice que jamás se llame a save() en el repositorio (no hay datos sucios).
      */
     @Test
     public void crearPedido_lanzaExcepcionSiClienteNoExiste() {
@@ -71,10 +75,13 @@ public class PedidoServiceMockTest {
         // Act & Assert
         Assertions.assertThatThrownBy(() -> pedidoService.crearPedido(request))
                 .isInstanceOf(ClienteNotFoundException.class);
+
+        verify(pedidoRepository, never()).save(any());
+        verify(itemPedidoRepository, never()).save(any());
     }
 
     /**
-     * Prueba 2: Valida la lógica de negocio de creación de pedido y persistencia de items con mocks.
+     * Prueba 2: Valida la lógica de negocio de creación de pedido y cálculo de subtotales/totales con mocks.
      */
     @Test
     public void crearPedido_conItemsCalculaSubtotalesCorrectamente() {
@@ -121,12 +128,17 @@ public class PedidoServiceMockTest {
         // Assert
         Assertions.assertThat(resultado).isNotNull();
         Assertions.assertThat(resultado.getEstado()).isEqualTo("Cocinando");
-        Mockito.verify(clienteRepository).findById(1L);
-        Mockito.verify(comidaRepository).findById(10L);
+        Assertions.assertThat(resultado.getItems()).hasSize(1);
+        Assertions.assertThat(resultado.getCantidadTotalProductos()).isEqualTo(2);
+        Assertions.assertThat(resultado.getSubtotalComida()).isEqualTo(40000.0);
+        Assertions.assertThat(resultado.getTotal()).isEqualTo(40000.0);
+
+        verify(clienteRepository).findById(1L);
+        verify(comidaRepository).findById(10L);
     }
 
     /**
-     * Prueba 3: Actualizar estado con nuevo domiciliario asignado.
+     * Prueba 3: Actualizar estado con nuevo domiciliario asignado explícitamente.
      */
     @Test
     public void actualizarEstado_cambiaEstadoAEnviadoYAsignaDomiciliario() {
@@ -158,17 +170,17 @@ public class PedidoServiceMockTest {
         Assertions.assertThat(actualizado.getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(actualizado.getDomiciliario()).isNotNull();
         Assertions.assertThat(actualizado.getDomiciliario().getNombre()).isEqualTo("Mateo Quintana");
+        verify(pedidoRepository).save(actualizado);
     }
 
     /**
-     * Prueba 4: Regla de negocio: si el pedido se despacha a 'Enviado' sin domiciliario asignado,
-     * el servicio busca automáticamente en la flota disponible.
+     * Prueba 4: Regla de negocio de auto-asignación: si el pedido se despacha a 'Enviado' sin domiciliario asignado,
+     * el servicio busca automáticamente en la flota disponible. Si no hay disponibles, no falla.
      */
     @Test
     public void actualizarEstado_asignaDomiciliarioDisponibleSiNoTieneYEsEnviado() {
-        // Arrange
+        // Escenario A: Domiciliario libre disponible -> se auto-asigna
         Long pedidoId = 5L;
-
         Pedido pedidoSinDomi = Pedido.builder()
                 .id(pedidoId)
                 .estado("Cocinando")
@@ -186,18 +198,26 @@ public class PedidoServiceMockTest {
         Mockito.when(domiciliarioRepository.findByDisponible(true)).thenReturn(List.of(domLibre));
         Mockito.when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Pedido despachado = pedidoService.actualizarEstado(pedidoId, "Enviado", null);
 
-        // Assert
         Assertions.assertThat(despachado).isNotNull();
         Assertions.assertThat(despachado.getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(despachado.getDomiciliario()).isNotNull();
         Assertions.assertThat(despachado.getDomiciliario().getNombre()).isEqualTo("Javier Morales");
+
+        // Escenario B: Ningún domiciliario disponible -> no debe lanzar NPE, se mantiene null
+        Pedido pedidoOtro = Pedido.builder().id(6L).estado("Cocinando").domiciliario(null).items(new ArrayList<>()).build();
+        Mockito.when(pedidoRepository.findById(6L)).thenReturn(Optional.of(pedidoOtro));
+        Mockito.when(domiciliarioRepository.findByDisponible(true)).thenReturn(List.of());
+
+        Pedido despachadoSinFlota = pedidoService.actualizarEstado(6L, "Enviado", null);
+        Assertions.assertThat(despachadoSinFlota.getEstado()).isEqualTo("Enviado");
+        Assertions.assertThat(despachadoSinFlota.getDomiciliario()).isNull();
     }
 
     /**
-     * Prueba 5: Cálculo matemático puro del total consolidando múltiples platos y adicionales.
+     * Prueba 5: Cálculo matemático puro del total consolidando múltiples platos y adicionales,
+     * incluyendo pruebas de frontera defensiva (nulos y colecciones vacías).
      */
     @Test
     public void calcularTotal_sumaCorrectamenteTodosLosItems() {
@@ -231,10 +251,12 @@ public class PedidoServiceMockTest {
                 .items(List.of(item1, item2))
                 .build();
 
-        // Act
+        // Act & Assert 1: Suma matemática exacta: 30000 + 33000 = 63000.0
         Double total = pedidoService.calcularTotal(pedido);
-
-        // Assert: 30000 + 33000 = 63000.0
         Assertions.assertThat(total).isEqualTo(63000.0);
+
+        // Act & Assert 2: Verificación defensiva contra nulos
+        Assertions.assertThat(pedidoService.calcularTotal(null)).isEqualTo(0.0);
+        Assertions.assertThat(pedidoService.calcularTotal(Pedido.builder().items(new ArrayList<>()).build())).isEqualTo(0.0);
     }
 }

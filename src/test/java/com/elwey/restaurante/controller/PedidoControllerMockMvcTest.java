@@ -5,6 +5,7 @@ import com.elwey.restaurante.dto.CrearPedidoDto;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.Pedido;
+import com.elwey.restaurante.errors.PedidoNotFoundException;
 import com.elwey.restaurante.service.PedidoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
@@ -31,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Pruebas de integración de Controlador con MockMvc (Semana 13).
  * Simula peticiones HTTP REST completas sobre PedidoController con MockBean para aislar la capa de servicio.
- * Cubre 5 tipos de consultas/verbos HTTP: GET todos, GET por ID, GET con filtro, POST crear y PUT actualizar.
+ * Cubre 5 tipos de consultas/verbos HTTP: GET colección, GET por ID (incluyendo 404), GET con filtro, POST crear (con 201 y 400) y PUT actualizar.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -48,8 +49,8 @@ public class PedidoControllerMockMvcTest {
     private ObjectMapper objectMapper;
 
     /**
-     * Consulta 1 [GET]: Listar todos los pedidos registrados en el restaurante.
-     * Espera HTTP 200 OK y una lista JSON de longitud 2.
+     * Consulta 1 [GET Colección]: Listar todos los pedidos registrados en el restaurante.
+     * Espera HTTP 200 OK y una lista JSON serializada con sus atributos correspondientes.
      */
     @Test
     public void pedidoController_mostrarPedidos_retorna200YLista() throws Exception {
@@ -71,8 +72,8 @@ public class PedidoControllerMockMvcTest {
     }
 
     /**
-     * Consulta 2 [GET con ID]: Obtener el detalle consolidado de un pedido por su identificador.
-     * Espera HTTP 200 OK y el objeto JSON con su ID correspondiente.
+     * Consulta 2 [GET por ID]: Obtener el detalle consolidado de un pedido por su identificador.
+     * Valida respuesta HTTP 200 OK ante ID existente y HTTP 404 NOT FOUND ante ID no registrado.
      */
     @Test
     public void pedidoController_mostrarPedidoPorId_retorna200YPedido() throws Exception {
@@ -81,18 +82,24 @@ public class PedidoControllerMockMvcTest {
         Pedido pedido = Pedido.builder().id(10L).cliente(cliente).estado("Cocinando").fechaCreacion(LocalDateTime.now()).items(new ArrayList<>()).build();
 
         Mockito.when(pedidoService.searchById(10L)).thenReturn(pedido);
+        Mockito.when(pedidoService.searchById(999L)).thenThrow(new PedidoNotFoundException(999L));
 
-        // Act & Assert
+        // Act & Assert 1: Pedido existente -> 200 OK
         mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", Matchers.is(10)))
                 .andExpect(jsonPath("$.estado", Matchers.is("Cocinando")))
                 .andExpect(jsonPath("$.clienteNombre", Matchers.is("Falcao")));
+
+        // Act & Assert 2: Pedido inexistente -> 404 NOT FOUND
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.mensaje", Matchers.containsString("No se pudo encontrar el pedido con ID: 999")));
     }
 
     /**
      * Consulta 3 [GET con Filtro]: Consultar los pedidos asignados a un domiciliario específico.
-     * Espera HTTP 200 OK y la lista de pedidos asignados al repartidor.
+     * Espera HTTP 200 OK y la lista de pedidos en ruta para dicho repartidor.
      */
     @Test
     public void pedidoController_mostrarPedidosPorDomiciliario_retorna200YListaFiltrada() throws Exception {
@@ -121,13 +128,13 @@ public class PedidoControllerMockMvcTest {
     }
 
     /**
-     * Consulta 4 [POST]: Crear un nuevo pedido en el restaurante.
-     * Envía payload JSON estructurado y espera HTTP 201 CREATED con el PedidoDto creado.
+     * Consulta 4 [POST Creación]: Crear un nuevo pedido en el restaurante.
+     * Valida HTTP 201 CREATED ante payload válido y HTTP 400 BAD REQUEST ante payload con ítems vacíos.
      */
     @Test
     public void pedidoController_ordenarPlatoConAdicionales_retorna201Created() throws Exception {
-        // Arrange
-        CrearPedidoDto request = CrearPedidoDto.builder()
+        // Arrange: Pedido válido
+        CrearPedidoDto requestValido = CrearPedidoDto.builder()
                 .clienteId(1L)
                 .items(List.of(
                         CrearPedidoDto.ItemPedidoRequestDto.builder()
@@ -148,18 +155,29 @@ public class PedidoControllerMockMvcTest {
 
         Mockito.when(pedidoService.crearPedido(any(CrearPedidoDto.class))).thenReturn(nuevoPedido);
 
-        // Act & Assert
+        // Act & Assert 1: Creación exitosa -> 201 CREATED
         mockMvc.perform(MockMvcRequestBuilders.post("/pedidos/ordenar")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(requestValido)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", Matchers.is(50)))
                 .andExpect(jsonPath("$.estado", Matchers.is("Cocinando")))
                 .andExpect(jsonPath("$.clienteNombre", Matchers.is("Lucho Díaz")));
+
+        // Act & Assert 2: Payload inválido (items vacíos) -> 400 BAD REQUEST
+        CrearPedidoDto requestInvalido = CrearPedidoDto.builder()
+                .clienteId(1L)
+                .items(List.of())
+                .build();
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/pedidos/ordenar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestInvalido)))
+                .andExpect(status().isBadRequest());
     }
 
     /**
-     * Consulta 5 [PUT]: Actualizar el estado de un pedido y gestionar domiciliario.
+     * Consulta 5 [PUT Actualización]: Actualizar el estado de un pedido y gestionar domiciliario.
      * Envía payload JSON de actualización y espera HTTP 200 OK con el estado modificado.
      */
     @Test
