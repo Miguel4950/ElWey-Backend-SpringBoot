@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +24,11 @@ import static org.mockito.Mockito.verify;
 /**
  * Pruebas unitarias de Servicio con Mocks (Semana 13).
  * Aísla la lógica de negocio simulando el comportamiento de los repositorios con Mockito.
- * Valida validaciones de entrada, cálculos matemáticos, reglas de despacho y cobertura de caminos críticos.
+ * Sigue la convención de nombres y anotaciones de la clase (CourseServiceTest).
  */
 @ExtendWith(MockitoExtension.class)
-public class PedidoServiceMockTest {
+@ActiveProfiles("test")
+public class PedidoServiceTestMock {
 
     @Mock
     private PedidoRepository pedidoRepository;
@@ -57,7 +59,7 @@ public class PedidoServiceMockTest {
      * y garantice que jamás se llame a save() en el repositorio (no hay datos sucios).
      */
     @Test
-    public void crearPedido_lanzaExcepcionSiClienteNoExiste() {
+    public void crearPedido_throwsClienteNotFoundException() {
         // Arrange
         Long clienteInexistenteId = 999L;
         CrearPedidoDto request = CrearPedidoDto.builder()
@@ -84,7 +86,7 @@ public class PedidoServiceMockTest {
      * Prueba 2: Valida la lógica de negocio de creación de pedido y cálculo de subtotales/totales con mocks.
      */
     @Test
-    public void crearPedido_conItemsCalculaSubtotalesCorrectamente() {
+    public void crearPedido_returnsPedido() {
         // Arrange
         Cliente clienteMock = Cliente.builder().id(1L).nombre("Messi").build();
         Comida comidaMock = Comida.builder().id(10L).nombre("Quesadilla").precio(20000.0).build();
@@ -141,7 +143,7 @@ public class PedidoServiceMockTest {
      * Prueba 3: Actualizar estado con nuevo domiciliario asignado explícitamente.
      */
     @Test
-    public void actualizarEstado_cambiaEstadoAEnviadoYAsignaDomiciliario() {
+    public void actualizarEstado_returnsPedido() {
         // Arrange
         Long pedidoId = 1L;
         Long domiciliarioId = 2L;
@@ -178,7 +180,7 @@ public class PedidoServiceMockTest {
      * el servicio busca automáticamente en la flota disponible. Si no hay disponibles, no falla.
      */
     @Test
-    public void actualizarEstado_asignaDomiciliarioDisponibleSiNoTieneYEsEnviado() {
+    public void actualizarEstado_returnsPedidoWithoutDomiciliarioWhenNoneAvailable() {
         // Escenario A: Domiciliario libre disponible -> se auto-asigna
         Long pedidoId = 5L;
         Pedido pedidoSinDomi = Pedido.builder()
@@ -220,7 +222,7 @@ public class PedidoServiceMockTest {
      * incluyendo pruebas de frontera defensiva (nulos y colecciones vacías).
      */
     @Test
-    public void calcularTotal_sumaCorrectamenteTodosLosItems() {
+    public void calcularTotal_returnsDouble() {
         // Arrange
         Comida taco = Comida.builder().nombre("Taco").precio(15000.0).build();
         Comida burrito = Comida.builder().nombre("Burrito").precio(25000.0).build();

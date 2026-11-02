@@ -5,25 +5,28 @@ import com.elwey.restaurante.entities.*;
 import com.elwey.restaurante.errors.PedidoNotFoundException;
 import com.elwey.restaurante.repository.*;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Pruebas de integración del servicio de Pedido (Semana 13).
- * Pruebas reales que interactúan con la base de datos H2 en memoria SIN MOCKS.
- * Valida la persistencia real, cascada de relaciones, cálculo transaccional y reglas de negocio.
+ * Prueba "Naive" real que interactúa con la base de datos de testeo SIN MOCKS.
+ * Utiliza @DirtiesContext para aislar cada prueba levantando el contexto de Spring de forma limpia.
  */
+@RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-@Transactional
-public class PedidoServiceIntegrationTest {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+public class PedidoServiceTestNaive {
 
     @Autowired
     private PedidoService pedidoService;
@@ -48,7 +51,7 @@ public class PedidoServiceIntegrationTest {
     private Adicional adicionalGuacamole;
     private Domiciliario domiciliario;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         Categoria categoria = categoriaRepository.save(
                 Categoria.builder()
@@ -104,7 +107,7 @@ public class PedidoServiceIntegrationTest {
      * Valida persistencia, cálculo de subtotales, total y estado inicial 'Cocinando'.
      */
     @Test
-    public void crearPedido_calculaSubtotalesYPersisteEnBaseDeDatos() {
+    public void pedidoService_crearPedido_calculaSubtotalesYPersiste() {
         // Arrange: 2 tacos (2 * 25000 = 50000) + 1 guacamole (1 * 5000 = 5000) = 55000 total
         CrearPedidoDto.AdicionalCantidadDto adicDto = CrearPedidoDto.AdicionalCantidadDto.builder()
                 .adicionalId(adicionalGuacamole.getId())
@@ -145,7 +148,7 @@ public class PedidoServiceIntegrationTest {
      * Valida la recuperación exitosa y el lanzamiento de excepción si el pedido no existe.
      */
     @Test
-    public void searchById_retornaPedidoExistente() {
+    public void pedidoService_searchById_returnsPedido() {
         // Arrange
         CrearPedidoDto pedidoRequest = CrearPedidoDto.builder()
                 .clienteId(cliente.getId())
@@ -176,7 +179,7 @@ public class PedidoServiceIntegrationTest {
      * Valida la transición operativa y la persistencia de la asignación.
      */
     @Test
-    public void actualizarEstado_cambiaEstadoAEnviadoYAsignaDomiciliario() {
+    public void pedidoService_actualizarEstado_cambiaEstadoAEnviadoYAsignaDomiciliario() {
         // Arrange
         CrearPedidoDto pedidoRequest = CrearPedidoDto.builder()
                 .clienteId(cliente.getId())
@@ -206,7 +209,7 @@ public class PedidoServiceIntegrationTest {
      * Valida la regla de negocio temporal del ciclo de vida del pedido.
      */
     @Test
-    public void actualizarEstado_entregadoFijaFechaEntrega() {
+    public void pedidoService_actualizarEstado_entregadoFijaFechaEntrega() {
         // Arrange
         CrearPedidoDto pedidoRequest = CrearPedidoDto.builder()
                 .clienteId(cliente.getId())
@@ -236,7 +239,7 @@ public class PedidoServiceIntegrationTest {
      * Valida el aislamiento estricto entre clientes sin fuga de pedidos ajenos.
      */
     @Test
-    public void findByCliente_retornaPedidosAsociadosAlCliente() {
+    public void pedidoService_findByCliente_returnsPedidos() {
         // Arrange: Crear 2 pedidos para Falcao
         CrearPedidoDto pedido1 = CrearPedidoDto.builder()
                 .clienteId(cliente.getId())

@@ -2,11 +2,12 @@ package com.elwey.restaurante.repository;
 
 import com.elwey.restaurante.entities.*;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,11 +15,11 @@ import java.util.List;
 
 /**
  * Pruebas unitarias para las 5 consultas personalizadas creadas con @Query (Semana 13).
+ * Sigue el patrón Arrange - Act - Assert con @DataJpaTest y @RunWith(SpringRunner.class).
  * Valida consultas SQL/JPQL escritas a mano con parámetros, filtros, joins y funciones de agregación.
- * Incluye pruebas de lógica tanto positivas como de frontera/negativas para cada consulta.
  */
+@RunWith(SpringRunner.class)
 @DataJpaTest
-@ActiveProfiles("test")
 public class ConsultasPersonalizadasQueryTest {
 
     @Autowired
@@ -44,7 +45,7 @@ public class ConsultasPersonalizadasQueryTest {
     private Pedido pedido1;
     private Pedido pedido2;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         categoriaTacos = categoriaRepository.save(
                 Categoria.builder()
@@ -138,7 +139,7 @@ public class ConsultasPersonalizadasQueryTest {
      * Valida la concordancia exacta de ambos predicados (AND) y la exclusión de otros estados.
      */
     @Test
-    public void testQuery_findPedidosPorEstadoYDomiciliario_retornaPedidosFiltrados() {
+    public void pedidoRepository_findPedidosPorEstadoYDomiciliario_returnsFilteredPedidos() {
         // Caso Positivo: Carlos Gómez con pedido "Enviado"
         List<Pedido> resultado = pedidoRepository.findPedidosPorEstadoYDomiciliario("Enviado", domiciliarioCarlos.getId());
 
@@ -160,7 +161,7 @@ public class ConsultasPersonalizadasQueryTest {
      * Valida que no distinga entre mayúsculas y minúsculas y que no devuelva pedidos ajenos.
      */
     @Test
-    public void testQuery_findPedidosPorClienteEmail_retornaPedidosDelCliente() {
+    public void pedidoRepository_findPedidosPorClienteEmail_returnsClientPedidos() {
         // Caso Positivo: Búsqueda con email en mayúsculas
         List<Pedido> resultado = pedidoRepository.findPedidosPorClienteEmail("JUAN.PEREZ@ELWEY.COM");
 
@@ -178,7 +179,7 @@ public class ConsultasPersonalizadasQueryTest {
      * Valida que la suma de estados coincida exactamente con la población de pedidos en base de datos.
      */
     @Test
-    public void testQuery_countPedidosPorEstado_retornaConteoCorrecto() {
+    public void pedidoRepository_countPedidosPorEstado_returnsCorrectCount() {
         // Act
         Long cocinando = pedidoRepository.countPedidosPorEstado("Cocinando");
         Long enviado = pedidoRepository.countPedidosPorEstado("Enviado");
@@ -197,7 +198,7 @@ public class ConsultasPersonalizadasQueryTest {
      * Valida tanto la cota inferior de precio como la exclusión estricta de platos inactivos (soft delete).
      */
     @Test
-    public void testQuery_findComidasConPrecioMayorOIgual_retornaComidasActivasFiltradas() {
+    public void comidaRepository_findComidasConPrecioMayorOIgual_returnsActiveComidas() {
         // Act 1: Con umbral de 30000.0 -> solo Suadero (31500) cumple
         List<Comida> comidasCaras = comidaRepository.findComidasConPrecioMayorOIgual(30000.0);
 
@@ -220,7 +221,7 @@ public class ConsultasPersonalizadasQueryTest {
      * Valida filtrado relacional sensible al contexto e insensible a mayúsculas/minúsculas.
      */
     @Test
-    public void testQuery_findComidasPorCategoriaYEtiqueta_retornaComidaExacta() {
+    public void comidaRepository_findComidasPorCategoriaYEtiqueta_returnsMatchingComida() {
         // Caso Positivo: Categoría "tacos" y etiqueta "estrella" en minúsculas
         List<Comida> resultado = comidaRepository.findComidasPorCategoriaYEtiqueta("tacos", "estrella");
 
