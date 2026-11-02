@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
+
 @Profile("!test")
 @Component
 @Transactional
@@ -71,7 +72,8 @@ public class DataLoader implements CommandLineRunner {
         public void run(String... args) throws Exception {
 
                 // 1. Crear 5 Categorías representativas del restaurante
-                String[] nombresCategorias = { "Tacos", "Quesadillas", "Entradas", "Especialidades", "Burritos", "Bebidas" };
+                String[] nombresCategorias = { "Tacos", "Quesadillas", "Entradas", "Especialidades", "Burritos",
+                                "Bebidas" };
                 String[] descCategorias = {
                                 "Variedad de tacos tradicionales servidos en tortilla de maíz o harina con ingredientes frescos.",
                                 "Muestras de queso fundido e ingredientes variados en tortillas a la plancha.",
@@ -102,18 +104,22 @@ public class DataLoader implements CommandLineRunner {
                 Categoria catBurritos = categorias.get(4);
                 Categoria catBebidas = categorias.get(5);
 
-                // 2. Catálogo Oficial de Comidas y Bebidas (Unificado en una sola estructura con guarda de idempotencia)
+                // 2. Catálogo Oficial de Comidas y Bebidas (Unificado en una sola estructura
+                // con guarda de idempotencia)
                 if (comidaRepository.count() == 0) {
                         List<Comida> comidasAInsertar = new ArrayList<>();
 
                         // 2.1 Platos de Comida Mexicana (40 recetas auténticas)
                         String[] nombresPlatos = {
                                         // Los 8 platos emblemáticos
-                                        "Tacos al Pastor", "Quesadilla de Birria", "Guacamole El Wey", "Enchiladas Rojas",
-                                        "Burrito Norteño", "Tacos de Suadero", "Nachos El Wey", "Gringa con Carne (la favorita de jaimes)",
+                                        "Tacos al Pastor", "Quesadilla de Birria", "Guacamole El Wey",
+                                        "Enchiladas Rojas",
+                                        "Burrito Norteño", "Tacos de Suadero", "Nachos El Wey",
+                                        "Gringa con Carne (la favorita de jaimes)",
                                         // 32 platos tradicionales adicionales
                                         "Tacos de Carnitas Michoacán", "Tacos de Pescado Baja", "Tacos Gobernador",
-                                        "Tacos de Cochinita Pibil", "Tacos de Barbacoa Hidalguense", "Tacos de Rib Eye con Tuétano",
+                                        "Tacos de Cochinita Pibil", "Tacos de Barbacoa Hidalguense",
+                                        "Tacos de Rib Eye con Tuétano",
                                         "Tacos de Chicharrón en Salsa Verde", "Tacos de Asada Poblana",
                                         "Quesadilla de Flor de Calabaza", "Quesadilla de Champiñones al Ajillo",
                                         "Quesadilla Sincronizada", "Quesadilla de Chicharrón Prensado",
@@ -121,7 +127,8 @@ public class DataLoader implements CommandLineRunner {
                                         "Totopos con Queso Fundido y Rajas", "Esquites Callejeros con Epazote",
                                         "Queso Fundido con Chorizo Casero", "Flautas Doradas de Pollo",
                                         "Sopes Tradicionales con Cecina", "Tostadas de Tinga con Crema",
-                                        "Chiles en Nogada de Puebla", "Pozole Rojo Tradicional", "Mole Poblano con Pollo",
+                                        "Chiles en Nogada de Puebla", "Pozole Rojo Tradicional",
+                                        "Mole Poblano con Pollo",
                                         "Tamal Oaxaqueño en Hoja de Plátano", "Fajitas Mixtas al Carbón",
                                         "Cochinita Pibil en Plato Hondo", "Birria Tapatía de Res en Cazuela",
                                         "Alambre Mixto de Res y Tocino", "Burrito California con Papas",
@@ -238,10 +245,12 @@ public class DataLoader implements CommandLineRunner {
                                                 : ("Auténtico plato de " + nombresPlatos[i]
                                                                 + " elaborado con ingredientes de la más alta calidad mexicana.");
                                 comidasAInsertar.add(new Comida(null, nombresPlatos[i], preciosPlatos[i],
-                                                descripcion, fotosPlatos[i], tagsPlatos[i], true, catAsignadaPlatos[i]));
+                                                descripcion, fotosPlatos[i], tagsPlatos[i], true,
+                                                catAsignadaPlatos[i]));
                         }
 
-                        // 2.2 Bebidas y Refrescos (Gaseosas populares y bebidas tradicionales mexicanas)
+                        // 2.2 Bebidas y Refrescos (Gaseosas populares y bebidas tradicionales
+                        // mexicanas)
                         String[] nombresBebidas = {
                                         "Coca-Cola Original 400ml", "Coca-Cola Sin Azúcar 400ml",
                                         "Sprite Lima-Limón 400ml", "Postobón Manzana 400ml",
@@ -265,7 +274,8 @@ public class DataLoader implements CommandLineRunner {
                                         "/images/comidas/sprite.jpg", "/images/comidas/postobon-manzana.jpg",
                                         "/images/comidas/colombiana.jpg", "/images/comidas/cuatro.jpg",
                                         "/images/comidas/agua-horchata.jpg", "/images/comidas/agua-jamaica.jpg",
-                                        "/images/comidas/jarritos-mandarina.jpg", "/images/comidas/jarritos-tamarindo.jpg",
+                                        "/images/comidas/jarritos-mandarina.jpg",
+                                        "/images/comidas/jarritos-tamarindo.jpg",
                                         "/images/comidas/cerveza-corona.jpg", "/images/comidas/cerveza-modelo.jpg"
                         };
 
@@ -454,7 +464,7 @@ public class DataLoader implements CommandLineRunner {
                 // Domiciliarios
                 List<Domiciliario> domiciliarios = new ArrayList<>();
                 domiciliarios.add(Domiciliario.builder().cedula("1010203040").nombre("Carlos Gómez")
-                                .celular("+57 311 222 3333").contrasena("domi123").disponible(true).build());
+                                .celular("+57 311 222 3333").contrasena("domi123").disponible(false).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1020304050").nombre("Andrés Parra")
                                 .celular("+57 312 444 5555").contrasena("domi123").disponible(false).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1030405060").nombre("Mateo Quintana")

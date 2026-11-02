@@ -65,7 +65,8 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
     public DomiciliarioDto autenticar(String identificador, String contrasena) {
         log.info("Autenticando domiciliario con identificador: {}", identificador);
 
-        if (identificador == null || identificador.trim().isEmpty() || contrasena == null || contrasena.trim().isEmpty()) {
+        if (identificador == null || identificador.trim().isEmpty() || contrasena == null
+                || contrasena.trim().isEmpty()) {
             throw new IllegalArgumentException("Debe proporcionar cédula o celular y contraseña.");
         }
 
@@ -78,7 +79,8 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
         if (domiciliario != null && contrasena.equals(domiciliario.getContrasena())) {
             return DomiciliarioDto.fromEntity(domiciliario);
         } else {
-            throw new CredencialesInvalidasException("Credenciales inválidas. Verifica tu cédula o celular y contraseña.");
+            throw new CredencialesInvalidasException(
+                    "Credenciales inválidas. Verifica tu cédula o celular y contraseña.");
         }
     }
 
@@ -119,9 +121,10 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
             actual.setCelular(datosModificados.getCelular().trim());
         }
         if (datosModificados.getDisponible() != null) {
-            // Regla de negocio: Si se intenta poner libre (disponible = true) cuando estaba ocupado,
+            // Regla de negocio: Si se intenta poner libre (disponible = true) cuando estaba
+            // ocupado,
             // no se permite si tiene pedidos activos en estado "Enviado"
-            if (Boolean.TRUE.equals(datosModificados.getDisponible()) && !Boolean.TRUE.equals(actual.getDisponible())) {
+            if (datosModificados.getDisponible() && !actual.getDisponible()) {
                 validarSinPedidosEnviados(id, actual.getNombre());
             }
             actual.setDisponible(datosModificados.getDisponible());
@@ -147,10 +150,11 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
     public Domiciliario actualizarDisponibilidad(Long id, Boolean disponible) {
         log.info("Actualizando disponibilidad de domiciliario con ID: {} a {}", id, disponible);
         Domiciliario existente = obtenerPorId(id);
-        boolean nuevoDisponible = (disponible != null) ? disponible : !Boolean.TRUE.equals(existente.getDisponible());
+        boolean nuevoDisponible = (disponible != null) ? disponible : !existente.getDisponible();
 
-        // Regla de negocio: Si se intenta marcar como disponible (libre) y antes no lo estaba:
-        if (nuevoDisponible && !Boolean.TRUE.equals(existente.getDisponible())) {
+        // Regla de negocio: Si se intenta marcar como disponible (libre) y antes no lo
+        // estaba:
+        if (nuevoDisponible && !existente.getDisponible()) {
             validarSinPedidosEnviados(id, existente.getNombre());
         }
 
@@ -175,7 +179,8 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
     }
 
     /**
-     * Valida que el domiciliario no tenga pedidos en estado Enviado (o en camino/enviando)
+     * Valida que el domiciliario no tenga pedidos en estado Enviado (o en
+     * camino/enviando)
      * antes de permitir que sea puesto como libre / disponible.
      */
     private void validarSinPedidosEnviados(Long domiciliarioId, String nombreDomiciliario) {
@@ -184,8 +189,8 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
             boolean tieneEnviado = pedidos.stream().anyMatch(p -> {
                 String est = (p.getEstado() != null) ? p.getEstado().trim() : "";
                 return est.equalsIgnoreCase("Enviado") ||
-                       est.equalsIgnoreCase("Enviando") ||
-                       est.equalsIgnoreCase("En camino");
+                        est.equalsIgnoreCase("Enviando") ||
+                        est.equalsIgnoreCase("En camino");
             });
             if (tieneEnviado) {
                 throw new DomiciliarioConPedidoEnviadoException(nombreDomiciliario);
