@@ -438,7 +438,6 @@ public class DataLoader implements CommandLineRunner {
                 categoriaRepository.save(catEntradas);
                 categoriaRepository.save(catEspecialidades);
                 categoriaRepository.save(catBurritos);
-                categoriaRepository.save(catBebidas);
 
                 // 6. Crear perfiles del personal del restaurante
 
