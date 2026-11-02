@@ -184,10 +184,21 @@ public class PedidoServiceImpl implements PedidoService {
             }
         } else if ("Entregado".equalsIgnoreCase(pedido.getEstado())) {
             pedido.setFechaEntrega(LocalDateTime.now());
-            // Al entregar el pedido, se libera al domiciliario para que vuelva a estar disponible (disponible = true)
+            // Al entregar el pedido, se libera al domiciliario únicamente si no tiene otros pedidos en estado "Enviado"
             if (pedido.getDomiciliario() != null) {
-                pedido.getDomiciliario().setDisponible(true);
-                domiciliarioRepository.save(pedido.getDomiciliario());
+                Long domiId = pedido.getDomiciliario().getId();
+                boolean tieneOtrosEnviados = pedidoRepository.findByDomiciliarioId(domiId).stream()
+                        .filter(p -> p.getId() != null && !p.getId().equals(pedido.getId()))
+                        .anyMatch(p -> {
+                            String est = (p.getEstado() != null) ? p.getEstado().trim() : "";
+                            return est.equalsIgnoreCase("Enviado") ||
+                                   est.equalsIgnoreCase("Enviando") ||
+                                   est.equalsIgnoreCase("En camino");
+                        });
+                if (!tieneOtrosEnviados) {
+                    pedido.getDomiciliario().setDisponible(true);
+                    domiciliarioRepository.save(pedido.getDomiciliario());
+                }
             }
         }
 
