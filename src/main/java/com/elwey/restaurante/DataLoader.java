@@ -438,7 +438,6 @@ public class DataLoader implements CommandLineRunner {
                 categoriaRepository.save(catEntradas);
                 categoriaRepository.save(catEspecialidades);
                 categoriaRepository.save(catBurritos);
-                categoriaRepository.save(catBebidas);
 
                 // 6. Crear perfiles del personal del restaurante
 
@@ -447,7 +446,7 @@ public class DataLoader implements CommandLineRunner {
                 domiciliarios.add(Domiciliario.builder().cedula("1010203040").nombre("Carlos Gómez")
                                 .celular("+57 311 222 3333").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1020304050").nombre("Andrés Parra")
-                                .celular("+57 312 444 5555").contrasena("domi123").disponible(true).build());
+                                .celular("+57 312 444 5555").contrasena("domi123").disponible(false).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1030405060").nombre("Mateo Quintana")
                                 .celular("+57 315 666 7777").contrasena("domi123").disponible(true).build());
                 domiciliarios.add(Domiciliario.builder().cedula("1040506070").nombre("Javier Morales")
