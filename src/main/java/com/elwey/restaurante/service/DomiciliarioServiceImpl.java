@@ -4,6 +4,7 @@ import com.elwey.restaurante.dto.DomiciliarioDto;
 import com.elwey.restaurante.entities.Domiciliario;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.CredencialesInvalidasException;
+import com.elwey.restaurante.errors.DomiciliarioConPedidoEnviadoException;
 import com.elwey.restaurante.errors.DomiciliarioNotFoundException;
 import com.elwey.restaurante.repository.DomiciliarioRepository;
 import com.elwey.restaurante.repository.PedidoRepository;
@@ -118,6 +119,11 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
             actual.setCelular(datosModificados.getCelular().trim());
         }
         if (datosModificados.getDisponible() != null) {
+            // Regla de negocio: Si se intenta poner libre (disponible = true) cuando estaba ocupado,
+            // no se permite si tiene pedidos activos en estado "Enviado"
+            if (Boolean.TRUE.equals(datosModificados.getDisponible()) && !Boolean.TRUE.equals(actual.getDisponible())) {
+                validarSinPedidosEnviados(id, actual.getNombre());
+            }
             actual.setDisponible(datosModificados.getDisponible());
         }
 
@@ -141,11 +147,14 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
     public Domiciliario actualizarDisponibilidad(Long id, Boolean disponible) {
         log.info("Actualizando disponibilidad de domiciliario con ID: {} a {}", id, disponible);
         Domiciliario existente = obtenerPorId(id);
-        if (disponible != null) {
-            existente.setDisponible(disponible);
-        } else {
-            existente.setDisponible(!Boolean.TRUE.equals(existente.getDisponible()));
+        boolean nuevoDisponible = (disponible != null) ? disponible : !Boolean.TRUE.equals(existente.getDisponible());
+
+        // Regla de negocio: Si se intenta marcar como disponible (libre) y antes no lo estaba:
+        if (nuevoDisponible && !Boolean.TRUE.equals(existente.getDisponible())) {
+            validarSinPedidosEnviados(id, existente.getNombre());
         }
+
+        existente.setDisponible(nuevoDisponible);
         return domiciliarioRepo.save(existente);
     }
 
@@ -163,5 +172,24 @@ public class DomiciliarioServiceImpl implements DomiciliarioService {
             }
         }
         domiciliarioRepo.delete(domiciliario);
+    }
+
+    /**
+     * Valida que el domiciliario no tenga pedidos en estado Enviado (o en camino/enviando)
+     * antes de permitir que sea puesto como libre / disponible.
+     */
+    private void validarSinPedidosEnviados(Long domiciliarioId, String nombreDomiciliario) {
+        List<Pedido> pedidos = pedidoRepo.findByDomiciliarioId(domiciliarioId);
+        if (pedidos != null && !pedidos.isEmpty()) {
+            boolean tieneEnviado = pedidos.stream().anyMatch(p -> {
+                String est = (p.getEstado() != null) ? p.getEstado().trim() : "";
+                return est.equalsIgnoreCase("Enviado") ||
+                       est.equalsIgnoreCase("Enviando") ||
+                       est.equalsIgnoreCase("En camino");
+            });
+            if (tieneEnviado) {
+                throw new DomiciliarioConPedidoEnviadoException(nombreDomiciliario);
+            }
+        }
     }
 }
