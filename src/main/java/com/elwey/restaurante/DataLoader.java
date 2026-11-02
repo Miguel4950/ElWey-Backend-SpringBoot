@@ -29,6 +29,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
+
+@Profile("!test")
 @Component
 @Transactional
 public class DataLoader implements CommandLineRunner {
@@ -78,13 +81,17 @@ public class DataLoader implements CommandLineRunner {
                 };
 
                 List<Categoria> categorias = new ArrayList<>();
-                for (int i = 0; i < nombresCategorias.length; i++) {
-                        Categoria c = Categoria.builder()
-                                        .nombre(nombresCategorias[i])
-                                        .descripcion(descCategorias[i])
-                                        .activo(true)
-                                        .build();
-                        categorias.add(categoriaRepository.save(c));
+                if (categoriaRepository.count() == 0) {
+                        for (int i = 0; i < nombresCategorias.length; i++) {
+                                Categoria c = Categoria.builder()
+                                                .nombre(nombresCategorias[i])
+                                                .descripcion(descCategorias[i])
+                                                .activo(true)
+                                                .build();
+                                categorias.add(categoriaRepository.save(c));
+                        }
+                } else {
+                        categorias.addAll(categoriaRepository.findAll());
                 }
 
                 Categoria catTacos = categorias.get(0);
@@ -94,206 +101,208 @@ public class DataLoader implements CommandLineRunner {
                 Categoria catBurritos = categorias.get(4);
                 Categoria catBebidas = categorias.get(5);
 
-                // 2. Crear 40 Comidas auténticas (los 8 originales del Mockup + 32 platos
-                // adicionales)
-                List<Comida> comidas = new ArrayList<>();
+                // 2. Catálogo Oficial de Comidas y Bebidas (Unificado en una sola estructura con guarda de idempotencia)
+                if (comidaRepository.count() == 0) {
+                        List<Comida> comidasAInsertar = new ArrayList<>();
 
-                // Los 8 platos emblemáticos del Sprint 1 y 2
-                comidas.add(new Comida(null, "Tacos al Pastor", 28900.0,
-                                "Carne de cerdo marinada en achiote tradicional, piña asada al carbón, cilantro fresco y cebolla en tortilla de maíz nixtamalizada.",
-                                "/images/comidas/tacos-al-pastor.jpg",
-                                "Estrella", true, catTacos));
+                        // 2.1 Platos de Comida Mexicana (40 recetas auténticas)
+                        String[] nombresPlatos = {
+                                        // Los 8 platos emblemáticos
+                                        "Tacos al Pastor", "Quesadilla de Birria", "Guacamole El Wey", "Enchiladas Rojas",
+                                        "Burrito Norteño", "Tacos de Suadero", "Nachos El Wey", "Gringa con Carne (la favorita de jaimes)",
+                                        // 32 platos tradicionales adicionales
+                                        "Tacos de Carnitas Michoacán", "Tacos de Pescado Baja", "Tacos Gobernador",
+                                        "Tacos de Cochinita Pibil", "Tacos de Barbacoa Hidalguense", "Tacos de Rib Eye con Tuétano",
+                                        "Tacos de Chicharrón en Salsa Verde", "Tacos de Asada Poblana",
+                                        "Quesadilla de Flor de Calabaza", "Quesadilla de Champiñones al Ajillo",
+                                        "Quesadilla Sincronizada", "Quesadilla de Chicharrón Prensado",
+                                        "Quesadilla Norteña con Arrachera", "Quesadilla de Tinga Poblana",
+                                        "Totopos con Queso Fundido y Rajas", "Esquites Callejeros con Epazote",
+                                        "Queso Fundido con Chorizo Casero", "Flautas Doradas de Pollo",
+                                        "Sopes Tradicionales con Cecina", "Tostadas de Tinga con Crema",
+                                        "Chiles en Nogada de Puebla", "Pozole Rojo Tradicional", "Mole Poblano con Pollo",
+                                        "Tamal Oaxaqueño en Hoja de Plátano", "Fajitas Mixtas al Carbón",
+                                        "Cochinita Pibil en Plato Hondo", "Birria Tapatía de Res en Cazuela",
+                                        "Alambre Mixto de Res y Tocino", "Burrito California con Papas",
+                                        "Burrito de Tinga Deshebrada", "Burrito al Pastor con Queso",
+                                        "Burrito Vegetariano con Frijol Negro"
+                        };
 
-                comidas.add(new Comida(null, "Quesadilla de Birria", 34800.0,
-                                "Tortilla de maíz rellena de queso Oaxaca fundido y jugosa birria de res cocinada a fuego lento por 8 horas. Acompañada de consomé para sumergir.",
-                                "/images/comidas/quesadilla-de-birria.jpg",
-                                "Estrella", true, catQuesadillas));
+                        Double[] preciosPlatos = {
+                                        // 8 platos emblemáticos
+                                        28900.0, 34800.0, 24500.0, 33900.0,
+                                        36900.0, 31500.0, 39900.0, 32800.0,
+                                        // 32 platos adicionales
+                                        29900.0, 35900.0, 38900.0, 31900.0,
+                                        34500.0, 44900.0, 27900.0, 32500.0,
+                                        26900.0, 27500.0, 28900.0, 29800.0,
+                                        37900.0, 30500.0,
+                                        23900.0, 19800.0, 31900.0, 28900.0,
+                                        29500.0, 27800.0,
+                                        48900.0, 39500.0, 41900.0, 22500.0,
+                                        45900.0, 39900.0, 42800.0, 43900.0,
+                                        38900.0, 33900.0, 35800.0, 31500.0
+                        };
 
-                comidas.add(new Comida(null, "Guacamole El Wey", 24500.0,
-                                "Aguacate Hass seleccionado machacado al momento en molcajete con tomate, jalapeño, cilantro y toque de limón. Servido con totopos artesanales crujientes.",
-                                "/images/comidas/guacamole-el-wey.jpg",
-                                "Vegetariano", true, catEntradas));
+                        String[] fotosPlatos = {
+                                        // 8 platos emblemáticos
+                                        "/images/comidas/tacos-al-pastor.jpg",
+                                        "/images/comidas/quesadilla-de-birria.jpg",
+                                        "/images/comidas/guacamole-el-wey.jpg",
+                                        "/images/comidas/enchiladas-rojas.jpg",
+                                        "/images/comidas/burrito-norteno.jpg",
+                                        "/images/comidas/tacos-de-suadero.jpg",
+                                        "/images/comidas/nachos-el-wey.jpg",
+                                        "/images/comidas/gringa-con-carne.jpg",
+                                        // 32 platos adicionales
+                                        "/images/comidas/tacos-carnitas-michoacan.jpg",
+                                        "/images/comidas/tacos-pescado-baja.jpg",
+                                        "/images/comidas/tacos-gobernador.jpg",
+                                        "/images/comidas/tacos-cochinita-pibil.jpg",
+                                        "/images/comidas/tacos-barbacoa-hidalguense.jpg",
+                                        "/images/comidas/tacos-ribeye-tuetano.jpg",
+                                        "/images/comidas/tacos-chicharron-verde.jpg",
+                                        "/images/comidas/tacos-asada-poblana.jpg",
+                                        "/images/comidas/quesadilla-flor-calabaza.jpg",
+                                        "/images/comidas/quesadilla-champinones.jpg",
+                                        "/images/comidas/quesadilla-sincronizada.jpg",
+                                        "/images/comidas/quesadilla-chicharron-prensado.jpg",
+                                        "/images/comidas/quesadilla-nortena-arrachera.jpg",
+                                        "/images/comidas/quesadilla-tinga-poblana.jpg",
+                                        "/images/comidas/totopos-queso-fundido.jpg",
+                                        "/images/comidas/esquites-callejeros.jpg",
+                                        "/images/comidas/queso-fundido-chorizo.jpg",
+                                        "/images/comidas/flautas-doradas-pollo.jpg",
+                                        "/images/comidas/sopes-tradicionales-cecina.jpg",
+                                        "/images/comidas/tostadas-tinga-crema.jpg",
+                                        "/images/comidas/chiles-en-nogada.jpg",
+                                        "/images/comidas/pozole-rojo.jpg",
+                                        "/images/comidas/mole-poblano.jpg",
+                                        "/images/comidas/tamal-oaxaqueno.jpg",
+                                        "/images/comidas/fajitas-mixtas-carbon.jpg",
+                                        "/images/comidas/cochinita-pibil-plato.jpg",
+                                        "/images/comidas/birria-tapatia-cazuela.jpg",
+                                        "/images/comidas/alambre-mixto-res.jpg",
+                                        "/images/comidas/burrito-california-papas.jpg",
+                                        "/images/comidas/burrito-tinga-deshebrada.jpg",
+                                        "/images/comidas/burrito-pastor-queso.jpg",
+                                        "/images/comidas/burrito-vegetariano.jpg"
+                        };
 
-                comidas.add(new Comida(null, "Enchiladas Rojas", 33900.0,
-                                "Tres tortillas de maíz rellenas de pechuga de pollo deshebrada, bañadas en salsa roja de chiles secos, cubiertas con crema ácida, queso fresco y cebolla morada.",
-                                "/images/comidas/enchiladas-rojas.jpg",
-                                "Estrella", true, catEspecialidades));
+                        Categoria[] catAsignadaPlatos = {
+                                        // 8 platos emblemáticos
+                                        catTacos, catQuesadillas, catEntradas, catEspecialidades,
+                                        catBurritos, catTacos, catEntradas, catQuesadillas,
+                                        // 32 platos adicionales
+                                        catTacos, catTacos, catTacos, catTacos,
+                                        catTacos, catTacos, catTacos, catTacos,
+                                        catQuesadillas, catQuesadillas, catQuesadillas, catQuesadillas,
+                                        catQuesadillas, catQuesadillas,
+                                        catEntradas, catEntradas, catEntradas, catEntradas,
+                                        catEntradas, catEntradas,
+                                        catEspecialidades, catEspecialidades, catEspecialidades, catEspecialidades,
+                                        catEspecialidades, catEspecialidades, catEspecialidades, catEspecialidades,
+                                        catBurritos, catBurritos, catBurritos, catBurritos
+                        };
 
-                comidas.add(new Comida(null, "Burrito Norteño", 36900.0,
-                                "Tortilla de harina gigante rellena de carne asada al carbón, frijoles refritos bayos, arroz a la mexicana, queso Chihuahua fundido y pico de gallo.",
-                                "/images/comidas/burrito-norteno.jpg",
-                                "Tradicional", true, catBurritos));
+                        String[] tagsPlatos = {
+                                        // 8 platos emblemáticos
+                                        "Estrella", "Estrella", "Vegetariano", "Estrella",
+                                        "Tradicional", "Tradicional", "Para Compartir", "Estrella",
+                                        // 32 platos adicionales
+                                        "Tradicional", "Tradicional", "Estrella", "Tradicional",
+                                        "Tradicional", "Estrella", "Picante", "Tradicional",
+                                        "Vegetariano", "Vegetariano", "Tradicional", "Tradicional",
+                                        "Estrella", "Picante",
+                                        "Para Compartir", "Vegetariano", "Para Compartir", "Tradicional",
+                                        "Tradicional", "Picante",
+                                        "Estrella", "Estrella", "Picante", "Tradicional",
+                                        "Estrella", "Tradicional", "Estrella", "Para Compartir",
+                                        "Tradicional", "Picante", "Estrella", "Vegetariano"
+                        };
 
-                comidas.add(new Comida(null, "Tacos de Suadero", 31500.0,
-                                "Corte suave de res confitado lentamente en su propia grasa estilo CDMX, picado al momento con cilantro criollo, cebolla y salsa taquera verde.",
-                                "/images/comidas/tacos-de-suadero.jpg",
-                                "Tradicional", true, catTacos));
+                        String[] descPlatos = {
+                                        "Carne de cerdo marinada en achiote tradicional, piña asada al carbón, cilantro fresco y cebolla en tortilla de maíz nixtamalizada.",
+                                        "Tortilla de maíz rellena de queso Oaxaca fundido y jugosa birria de res cocinada a fuego lento por 8 horas. Acompañada de consomé para sumergir.",
+                                        "Aguacate Hass seleccionado machacado al momento en molcajete con tomate, jalapeño, cilantro y toque de limón. Servido con totopos artesanales crujientes.",
+                                        "Tres tortillas de maíz rellenas de pechuga de pollo deshebrada, bañadas en salsa roja de chiles secos, cubiertas con crema ácida, queso fresco y cebolla morada.",
+                                        "Tortilla de harina gigante rellena de carne asada al carbón, frijoles refritos bayos, arroz a la mexicana, queso Chihuahua fundido y pico de gallo.",
+                                        "Corte suave de res confitado lentamente en su propia grasa estilo CDMX, picado al momento con cilantro criollo, cebolla y salsa taquera verde.",
+                                        "Cama abundante de totopos de maíz crujientes, frijoles refritos, abundante queso fundido Oaxaca y Cheddar, pico de gallo fresco, jalapeños en escabeche, crema ácida y guacamole especial.",
+                                        "Deliciosa quesadilla en tortilla de harina dorada a la plancha con mantequilla, rellena de abundante carne al pastor, queso Oaxaca derretido, piña asada caramelizada y cilantro fresco."
+                        };
 
-                comidas.add(new Comida(null, "Nachos El Wey", 39900.0,
-                                "Cama abundante de totopos de maíz crujientes, frijoles refritos, abundante queso fundido Oaxaca y Cheddar, pico de gallo fresco, jalapeños en escabeche, crema ácida y guacamole especial.",
-                                "/images/comidas/nachos-el-wey.jpg",
-                                "Para Compartir", true, catEntradas));
+                        for (int i = 0; i < nombresPlatos.length; i++) {
+                                String descripcion = (i < descPlatos.length) ? descPlatos[i]
+                                                : ("Auténtico plato de " + nombresPlatos[i]
+                                                                + " elaborado con ingredientes de la más alta calidad mexicana.");
+                                comidasAInsertar.add(new Comida(null, nombresPlatos[i], preciosPlatos[i],
+                                                descripcion, fotosPlatos[i], tagsPlatos[i], true, catAsignadaPlatos[i]));
+                        }
 
-                comidas.add(new Comida(null, "Gringa con Carne (la favorita de jaimes)", 32800.0,
-                                "Deliciosa quesadilla en tortilla de harina dorada a la plancha con mantequilla, rellena de abundante carne al pastor, queso Oaxaca derretido, piña asada caramelizada y cilantro fresco.",
-                                "/images/comidas/gringa-con-carne.jpg",
-                                "Estrella", true, catQuesadillas));
+                        // 2.2 Bebidas y Refrescos (Gaseosas populares y bebidas tradicionales mexicanas)
+                        String[] nombresBebidas = {
+                                        "Coca-Cola Original 400ml", "Coca-Cola Sin Azúcar 400ml",
+                                        "Sprite Lima-Limón 400ml", "Postobón Manzana 400ml",
+                                        "Colombiana La Nuestra 400ml", "Cuatro Toronja 400ml",
+                                        "Agua de Horchata Tradicional", "Agua de Jamaica Casera",
+                                        "Jarritos de Mandarina 370ml", "Jarritos de Tamarindo 370ml",
+                                        "Cerveza Corona Extra 355ml", "Cerveza Negra Modelo 355ml"
+                        };
 
-                // Platos 9 al 40 (32 platillos mexicanos adicionales)
-                String[] nombresExtra = {
-                                "Tacos de Carnitas Michoacán", "Tacos de Pescado Baja", "Tacos Gobernador",
-                                "Tacos de Cochinita Pibil",
-                                "Tacos de Barbacoa Hidalguense", "Tacos de Rib Eye con Tuétano",
-                                "Tacos de Chicharrón en Salsa Verde", "Tacos de Asada Poblana",
-                                "Quesadilla de Flor de Calabaza", "Quesadilla de Champiñones al Ajillo",
-                                "Quesadilla Sincronizada", "Quesadilla de Chicharrón Prensado",
-                                "Quesadilla Norteña con Arrachera", "Quesadilla de Tinga Poblana",
-                                "Totopos con Queso Fundido y Rajas", "Esquites Callejeros con Epazote",
-                                "Queso Fundido con Chorizo Casero", "Flautas Doradas de Pollo",
-                                "Sopes Tradicionales con Cecina", "Tostadas de Tinga con Crema",
-                                "Chiles en Nogada de Puebla", "Pozole Rojo Tradicional", "Mole Poblano con Pollo",
-                                "Tamal Oaxaqueño en Hoja de Plátano",
-                                "Fajitas Mixtas al Carbón", "Cochinita Pibil en Plato Hondo",
-                                "Birria Tapatía de Res en Cazuela", "Alambre Mixto de Res y Tocino",
-                                "Burrito California con Papas", "Burrito de Tinga Deshebrada",
-                                "Burrito al Pastor con Queso", "Burrito Vegetariano con Frijol Negro"
-                };
+                        Double[] preciosBebidas = {
+                                        6800.0, 6800.0,
+                                        6800.0, 5900.0,
+                                        5900.0, 6800.0,
+                                        8500.0, 7900.0,
+                                        11500.0, 11500.0,
+                                        12900.0, 13500.0
+                        };
 
-                Double[] preciosExtra = {
-                                29900.0, 35900.0, 38900.0, 31900.0,
-                                34500.0, 44900.0, 27900.0, 32500.0,
-                                26900.0, 27500.0, 28900.0, 29800.0,
-                                37900.0, 30500.0, 23900.0, 19800.0,
-                                31900.0, 28900.0, 29500.0, 27800.0,
-                                48900.0, 39500.0, 41900.0, 22500.0,
-                                45900.0, 39900.0, 42800.0, 43900.0,
-                                38900.0, 33900.0, 35800.0, 31500.0
-                };
+                        String[] fotosBebidas = {
+                                        "/images/comidas/coca-cola.jpg", "/images/comidas/coca-cola-zero.jpg",
+                                        "/images/comidas/sprite.jpg", "/images/comidas/postobon-manzana.jpg",
+                                        "/images/comidas/colombiana.jpg", "/images/comidas/cuatro.jpg",
+                                        "/images/comidas/agua-horchata.jpg", "/images/comidas/agua-jamaica.jpg",
+                                        "/images/comidas/jarritos-mandarina.jpg", "/images/comidas/jarritos-tamarindo.jpg",
+                                        "/images/comidas/cerveza-corona.jpg", "/images/comidas/cerveza-modelo.jpg"
+                        };
 
-                String[] fotosExtra = {
-                                "/images/comidas/tacos-carnitas-michoacan.jpg",
-                                "/images/comidas/tacos-pescado-baja.jpg",
-                                "/images/comidas/tacos-gobernador.jpg",
-                                "/images/comidas/tacos-cochinita-pibil.jpg",
-                                "/images/comidas/tacos-barbacoa-hidalguense.jpg",
-                                "/images/comidas/tacos-ribeye-tuetano.jpg",
-                                "/images/comidas/tacos-chicharron-verde.jpg",
-                                "/images/comidas/tacos-asada-poblana.jpg",
-                                "/images/comidas/quesadilla-flor-calabaza.jpg",
-                                "/images/comidas/quesadilla-champinones.jpg",
-                                "/images/comidas/quesadilla-sincronizada.jpg",
-                                "/images/comidas/quesadilla-chicharron-prensado.jpg",
-                                "/images/comidas/quesadilla-nortena-arrachera.jpg",
-                                "/images/comidas/quesadilla-tinga-poblana.jpg",
-                                "/images/comidas/totopos-queso-fundido.jpg",
-                                "/images/comidas/esquites-callejeros.jpg",
-                                "/images/comidas/queso-fundido-chorizo.jpg",
-                                "/images/comidas/flautas-doradas-pollo.jpg",
-                                "/images/comidas/sopes-tradicionales-cecina.jpg",
-                                "/images/comidas/tostadas-tinga-crema.jpg",
-                                "/images/comidas/chiles-en-nogada.jpg",
-                                "/images/comidas/pozole-rojo.jpg",
-                                "/images/comidas/mole-poblano.jpg",
-                                "/images/comidas/tamal-oaxaqueno.jpg",
-                                "/images/comidas/fajitas-mixtas-carbon.jpg",
-                                "/images/comidas/cochinita-pibil-plato.jpg",
-                                "/images/comidas/birria-tapatia-cazuela.jpg",
-                                "/images/comidas/alambre-mixto-res.jpg",
-                                "/images/comidas/burrito-california-papas.jpg",
-                                "/images/comidas/burrito-tinga-deshebrada.jpg",
-                                "/images/comidas/burrito-pastor-queso.jpg",
-                                "/images/comidas/burrito-vegetariano.jpg"
-                };
+                        String[] descBebidas = {
+                                        "Gaseosa clásica servida bien fría con hielo y rodaja de limón.",
+                                        "Todo el sabor original y burbujeante de Coca-Cola pero sin calorías.",
+                                        "Gaseosa cristalina de sabor lima-limón 100% refrescante.",
+                                        "El clásico y dulce sabor a manzana consentido de Colombia.",
+                                        "Refresco sabor kola tradicional, el maridaje perfecto con comida mexicana.",
+                                        "Gaseosa cítrica de toronja natural, ideal para acompañar tacos picantes.",
+                                        "Bebida mexicana artesanal elaborada a base de arroz, leche, canela en rama y vainilla de Papantla.",
+                                        "Infusión fría de flor de jamaica natural con un toque cítrico y endulzada al punto justo.",
+                                        "Famoso refresco mexicano importado con sabor natural a mandarina jugosa.",
+                                        "Auténtico refresco mexicano con pulpa de tamarindo agridulce y toque cítrico.",
+                                        "Cerveza rubia tipo pilsner mexicana servida con su tradicional limón y sal marina.",
+                                        "Cerveza mexicana tipo Munich oscura con notas tostadas de caramelo y malta."
+                        };
 
-                Categoria[] catAsignadaExtra = {
-                                catTacos, catTacos, catTacos, catTacos,
-                                catTacos, catTacos, catTacos, catTacos,
-                                catQuesadillas, catQuesadillas, catQuesadillas, catQuesadillas,
-                                catQuesadillas, catQuesadillas, catEntradas, catEntradas,
-                                catEntradas, catEntradas, catEntradas, catEntradas,
-                                catEspecialidades, catEspecialidades, catEspecialidades, catEspecialidades,
-                                catEspecialidades, catEspecialidades, catEspecialidades, catEspecialidades,
-                                catBurritos, catBurritos, catBurritos, catBurritos
-                };
+                        String[] tagsBebidas = {
+                                        "Tradicional", "Tradicional",
+                                        "Tradicional", "Tradicional",
+                                        "Tradicional", "Tradicional",
+                                        "Estrella", "Tradicional",
+                                        "Estrella", "Tradicional",
+                                        "Estrella", "Estrella"
+                        };
 
-                String[] tagsExtra = {
-                                "Tradicional", "Tradicional", "Estrella", "Tradicional",
-                                "Tradicional", "Estrella", "Picante", "Tradicional",
-                                "Vegetariano", "Vegetariano", "Tradicional", "Tradicional",
-                                "Estrella", "Picante", "Para Compartir", "Vegetariano",
-                                "Para Compartir", "Tradicional", "Tradicional", "Picante",
-                                "Estrella", "Estrella", "Picante", "Tradicional",
-                                "Estrella", "Tradicional", "Estrella", "Para Compartir",
-                                "Tradicional", "Picante", "Estrella", "Vegetariano"
-                };
+                        for (int i = 0; i < nombresBebidas.length; i++) {
+                                comidasAInsertar.add(new Comida(null, nombresBebidas[i], preciosBebidas[i],
+                                                descBebidas[i], fotosBebidas[i], tagsBebidas[i], true, catBebidas));
+                        }
 
-                for (int i = 0; i < nombresExtra.length; i++) {
-                        comidas.add(new Comida(null, nombresExtra[i], preciosExtra[i],
-                                        "Auténtico plato de " + nombresExtra[i]
-                                                        + " elaborado con ingredientes de la más alta calidad mexicana.",
-                                        fotosExtra[i], tagsExtra[i], true, catAsignadaExtra[i]));
+                        for (Comida c : comidasAInsertar) {
+                                comidaRepository.save(c);
+                        }
                 }
 
-                // Bebidas y Refrescos (Gaseosas populares y bebidas tradicionales mexicanas)
-                String[] nombresBebidas = {
-                                "Coca-Cola Original 400ml", "Coca-Cola Sin Azúcar 400ml",
-                                "Sprite Lima-Limón 400ml", "Postobón Manzana 400ml",
-                                "Colombiana La Nuestra 400ml", "Cuatro Toronja 400ml",
-                                "Agua de Horchata Tradicional", "Agua de Jamaica Casera",
-                                "Jarritos de Mandarina 370ml", "Jarritos de Tamarindo 370ml",
-                                "Cerveza Corona Extra 355ml", "Cerveza Negra Modelo 355ml"
-                };
-
-                Double[] preciosBebidas = {
-                                6800.0, 6800.0,
-                                6800.0, 5900.0,
-                                5900.0, 6800.0,
-                                8500.0, 7900.0,
-                                11500.0, 11500.0,
-                                12900.0, 13500.0
-                };
-
-                String[] fotosBebidas = {
-                                "/images/comidas/coca-cola.jpg", "/images/comidas/coca-cola-zero.jpg",
-                                "/images/comidas/sprite.jpg", "/images/comidas/postobon-manzana.jpg",
-                                "/images/comidas/colombiana.jpg", "/images/comidas/cuatro.jpg",
-                                "/images/comidas/agua-horchata.jpg", "/images/comidas/agua-jamaica.jpg",
-                                "/images/comidas/jarritos-mandarina.jpg", "/images/comidas/jarritos-tamarindo.jpg",
-                                "/images/comidas/cerveza-corona.jpg", "/images/comidas/cerveza-modelo.jpg"
-                };
-
-                String[] descBebidas = {
-                                "Gaseosa clásica servida bien fría con hielo y rodaja de limón.",
-                                "Todo el sabor original y burbujeante de Coca-Cola pero sin calorías.",
-                                "Gaseosa cristalina de sabor lima-limón 100% refrescante.",
-                                "El clásico y dulce sabor a manzana consentido de Colombia.",
-                                "Refresco sabor kola tradicional, el maridaje perfecto con comida mexicana.",
-                                "Gaseosa cítrica de toronja natural, ideal para acompañar tacos picantes.",
-                                "Bebida mexicana artesanal elaborada a base de arroz, leche, canela en rama y vainilla de Papantla.",
-                                "Infusión fría de flor de jamaica natural con un toque cítrico y endulzada al punto justo.",
-                                "Famoso refresco mexicano importado con sabor natural a mandarina jugosa.",
-                                "Auténtico refresco mexicano con pulpa de tamarindo agridulce y toque cítrico.",
-                                "Cerveza rubia tipo pilsner mexicana servida con su tradicional limón y sal marina.",
-                                "Cerveza mexicana tipo Munich oscura con notas tostadas de caramelo y malta."
-                };
-
-                String[] tagsBebidas = {
-                                "Tradicional", "Tradicional",
-                                "Tradicional", "Tradicional",
-                                "Tradicional", "Tradicional",
-                                "Estrella", "Tradicional",
-                                "Estrella", "Tradicional",
-                                "Estrella", "Estrella"
-                };
-
-                for (int i = 0; i < nombresBebidas.length; i++) {
-                        comidas.add(new Comida(null, nombresBebidas[i], preciosBebidas[i],
-                                        descBebidas[i], fotosBebidas[i], tagsBebidas[i], true, catBebidas));
-                }
-
-                for (Comida c : comidas) {
-                        comidaRepository.save(c);
-                }
+                List<Comida> comidas = comidaRepository.findAll();
 
                 // 3. Crear 10 Clientes (Jugadores de fútbol famosos con emails únicos)
                 String[] nombresClientes = {
