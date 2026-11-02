@@ -1,6 +1,7 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.AdicionalDto;
+import com.elwey.restaurante.dto.AdicionalListadoDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.service.AdicionalService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +18,8 @@ import java.util.stream.Collectors;
 
 /**
  * Controlador REST para la gestión de Adicionales (extras e ingredientes).
- * Expone endpoints para el CRUD completo y filtrado por comida utilizando AdicionalDto.
+ * Expone endpoints para el CRUD completo y filtrado por comida utilizando
+ * AdicionalDto.
  */
 @Tag(name = "Adicionales", description = "Endpoints para la gestión y consulta de adicionales e ingredientes extra")
 @RestController
@@ -32,10 +34,10 @@ public class AdicionalController {
 
     @Operation(summary = "Listar todos los adicionales registrados")
     @GetMapping({ "", "/", "/all" })
-    public ResponseEntity<List<AdicionalDto>> listarTodos() {
+    public ResponseEntity<List<AdicionalListadoDto>> listarTodos() {
         log.info("Petición REST: listar todos los adicionales");
-        List<AdicionalDto> dtos = adicionalService.findAll().stream()
-                .map(AdicionalDto::fromEntity)
+        List<AdicionalListadoDto> dtos = adicionalService.findAll().stream()
+                .map(AdicionalListadoDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
