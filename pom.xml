@@ -72,10 +72,9 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- JUnit Vintage Engine para compatibilidad con @RunWith(SpringRunner.class) (Semana 13) -->
 		<dependency>
-			<groupId>org.junit.vintage</groupId>
-			<artifactId>junit-vintage-engine</artifactId>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -110,6 +109,13 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<dependencies>
+					<dependency>
+						<groupId>org.junit.vintage</groupId>
+						<artifactId>junit-vintage-engine</artifactId>
+						<version>5.10.2</version>
+					</dependency>
+				</dependencies>
 				<configuration>
 					<includes>
 						<include>**/*Test*.java</include>
