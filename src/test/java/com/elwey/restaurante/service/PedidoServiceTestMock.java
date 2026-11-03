@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
  * Pruebas unitarias de Servicio con Mocks (Semana 13).
  * Aísla la lógica de negocio simulando el comportamiento de los repositorios con Mockito.
  * Sigue la convención de nombres y anotaciones de la clase (CourseServiceTest):
- * [metodo]_[lo_que_retorna] (returnsPedido, returnsNotFound, returnsDouble, returnsZero).
+ * [componente]_[metodo]_[lo_que_retorna] (Pedido, returnsNotFound, Double, returnsZero).
  * Cada escenario (éxito, fallo o frontera) se ejecuta en un método @Test independiente.
  */
 @ExtendWith(MockitoExtension.class)
@@ -61,7 +61,7 @@ public class PedidoServiceTestMock {
      * y garantice que jamás se llame a save() en el repositorio (retorna NotFound).
      */
     @Test
-    public void crearPedido_returnsNotFound() {
+    public void pedidoService_crearPedido_returnsNotFound() {
         // Arrange
         Long clienteInexistenteId = 999L;
         CrearPedidoDto request = CrearPedidoDto.builder()
@@ -89,7 +89,7 @@ public class PedidoServiceTestMock {
      * Retorna el objeto Pedido persistido con su estado inicial.
      */
     @Test
-    public void crearPedido_returnsPedido() {
+    public void pedidoService_crearPedido_Pedido() {
         // Arrange
         Cliente clienteMock = Cliente.builder().id(1L).nombre("Messi").build();
         Comida comidaMock = Comida.builder().id(10L).nombre("Quesadilla").precio(20000.0).build();
@@ -147,7 +147,7 @@ public class PedidoServiceTestMock {
      * Retorna el Pedido actualizado con el domiciliario vinculado.
      */
     @Test
-    public void actualizarEstado_returnsPedido() {
+    public void pedidoService_actualizarEstado_Pedido() {
         // Arrange
         Long pedidoId = 1L;
         Long domiciliarioId = 2L;
@@ -184,7 +184,7 @@ public class PedidoServiceTestMock {
      * el servicio busca automáticamente en la flota libre y auto-asigna el repartidor disponible.
      */
     @Test
-    public void actualizarEstado_autoAsignaFlota_returnsPedido() {
+    public void pedidoService_actualizarEstado_autoAsignaFlota_Pedido() {
         // Arrange
         Long pedidoId = 5L;
         Pedido pedidoSinDomi = Pedido.builder()
@@ -219,7 +219,7 @@ public class PedidoServiceTestMock {
      * el servicio actualiza el estado sin fallar y mantiene el domiciliario como null.
      */
     @Test
-    public void actualizarEstado_sinFlotaDisponible_returnsPedido() {
+    public void pedidoService_actualizarEstado_sinFlotaDisponible_Pedido() {
         // Arrange
         Long pedidoId = 6L;
         Pedido pedidoOtro = Pedido.builder()
@@ -247,7 +247,7 @@ public class PedidoServiceTestMock {
      * Retorna el valor escalar Double exacto.
      */
     @Test
-    public void calcularTotal_conPlatosYAdicionales_returnsDouble() {
+    public void pedidoService_calcularTotal_Double() {
         // Arrange
         Comida taco = Comida.builder().nombre("Taco").precio(15000.0).build();
         Comida burrito = Comida.builder().nombre("Burrito").precio(25000.0).build();
@@ -290,7 +290,7 @@ public class PedidoServiceTestMock {
      * Retorna 0.0 (returnsZero) evitando NullPointerException.
      */
     @Test
-    public void calcularTotal_cuandoPedidoNulo_returnsZero() {
+    public void pedidoService_calcularTotal_returnsZero() {
         // Act & Assert
         Assertions.assertThat(pedidoService.calcularTotal(null)).isEqualTo(0.0);
         Assertions.assertThat(pedidoService.calcularTotal(Pedido.builder().items(new ArrayList<>()).build())).isEqualTo(0.0);

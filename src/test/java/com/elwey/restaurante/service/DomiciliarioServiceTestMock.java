@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verify;
  * Sigue la doctrina del profesor Angarita (CourseServiceTest):
  * - @ExtendWith(MockitoExtension.class)
  * - @ActiveProfiles("test")
- * - Nomenclatura [metodo]_[lo_que_retorna]
+ * - Nomenclatura [componente]_[metodo]_[lo_que_retorna]
  * - Aislamiento estricto de repositorios mediante simulación Mockito.
  * - Separación de pruebas de éxito y fallo en métodos independientes.
  */
@@ -49,7 +49,7 @@ public class DomiciliarioServiceTestMock {
      * (retorna conflicto de validación) y NO guardar cambios en la base de datos.
      */
     @Test
-    public void actualizarDisponibilidad_whenTienePedidoEnviado_returnsConflict() {
+    public void domiciliarioService_actualizarDisponibilidad_returnsConflict() {
         // Arrange
         Long domiId = 1L;
         Domiciliario domiOcupado = Domiciliario.builder()
@@ -83,7 +83,7 @@ public class DomiciliarioServiceTestMock {
      * o lista vacía), se permite marcarlo como libre / disponible exitosamente retornando el Domiciliario actualizado.
      */
     @Test
-    public void actualizarDisponibilidad_whenSinPedidosEnviados_returnsDomiciliario() {
+    public void domiciliarioService_actualizarDisponibilidad_Domiciliario() {
         // Arrange
         Long domiId = 2L;
         Domiciliario domiOcupado = Domiciliario.builder()
@@ -126,7 +126,7 @@ public class DomiciliarioServiceTestMock {
      * siempre es una operación permitida sin restricciones de pedidos en ruta, retornando el Domiciliario actualizado.
      */
     @Test
-    public void actualizarDisponibilidad_marcarOcupado_returnsDomiciliario() {
+    public void domiciliarioService_actualizarDisponibilidad_marcarOcupado_Domiciliario() {
         // Arrange
         Long domiId = 3L;
         Domiciliario domiLibre = Domiciliario.builder()
@@ -162,7 +162,7 @@ public class DomiciliarioServiceTestMock {
      * activar su disponibilidad lance la excepción (retorna conflicto) si tiene pedidos en estado "Enviado".
      */
     @Test
-    public void actualizar_whenIntentaPonerLibreConPedidoEnviado_returnsConflict() {
+    public void domiciliarioService_actualizar_returnsConflict() {
         // Arrange
         Long domiId = 1L;
         Domiciliario domiActual = Domiciliario.builder()
@@ -200,7 +200,7 @@ public class DomiciliarioServiceTestMock {
      * cuando no tiene pedidos en ruta, retornando la entidad Domiciliario actualizada.
      */
     @Test
-    public void actualizar_whenSinPedidosEnviados_returnsDomiciliario() {
+    public void domiciliarioService_actualizar_Domiciliario() {
         // Arrange
         Long domiId = 4L;
         Domiciliario domiActual = Domiciliario.builder()
