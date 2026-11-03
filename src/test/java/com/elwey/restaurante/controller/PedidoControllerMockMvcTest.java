@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,8 +24,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Pruebas de integración de Controlador con MockMvc (Semana 13).
@@ -61,7 +62,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.searchAll()).thenReturn(List.of(p1, p2));
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -80,7 +81,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.searchAll()).thenReturn(List.of());
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -90,7 +91,7 @@ public class PedidoControllerMockMvcTest {
      * Retorna el objeto Pedido con código HTTP 200 OK.
      */
     @Test
-    public void pedidoController_mostrarPedidoPorId_Pedido() throws Exception {
+    public void pedidoController_mostrarPedidoPorId_returnsPedido() throws Exception {
         // Arrange
         Cliente cliente = Cliente.builder().id(3L).nombre("Falcao").email("falcao@elwey.com").build();
         Pedido pedido = Pedido.builder().id(10L).cliente(cliente).estado("Cocinando").fechaCreacion(LocalDateTime.now()).items(new ArrayList<>()).build();
@@ -98,7 +99,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.searchById(10L)).thenReturn(pedido);
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos/10"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.estado").value("Cocinando"))
@@ -115,7 +116,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.searchById(999L)).thenThrow(new PedidoNotFoundException(999L));
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos/999"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensaje").value("No se pudo encontrar el pedido con ID: 999"));
     }
@@ -142,7 +143,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.findByDomiciliario(domiId)).thenReturn(List.of(pedidoEnRuta));
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos/domiciliario/2"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/domiciliario/2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(25))
@@ -161,7 +162,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.findByDomiciliario(domiId)).thenReturn(List.of());
 
         // Act & Assert
-        mockMvc.perform(get("/pedidos/domiciliario/3"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/domiciliario/3"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
@@ -195,7 +196,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.crearPedido(any(CrearPedidoDto.class))).thenReturn(nuevoPedido);
 
         // Act & Assert
-        mockMvc.perform(post("/pedidos/ordenar")
+        mockMvc.perform(MockMvcRequestBuilders.post("/pedidos/ordenar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestValido)))
                 .andExpect(status().isCreated())
@@ -209,7 +210,7 @@ public class PedidoControllerMockMvcTest {
      * Retorna el objeto Pedido modificado con código HTTP 200 OK.
      */
     @Test
-    public void pedidoController_actualizarEstadoPedido_Pedido() throws Exception {
+    public void pedidoController_actualizarEstadoPedido_returnsOk() throws Exception {
         // Arrange
         Long pedidoId = 15L;
         ActualizarEstadoPedidoDto updateDto = ActualizarEstadoPedidoDto.builder()
@@ -230,7 +231,7 @@ public class PedidoControllerMockMvcTest {
         Mockito.when(pedidoService.actualizarEstado(eq(pedidoId), eq("Entregado"), any())).thenReturn(pedidoEntregado);
 
         // Act & Assert
-        mockMvc.perform(put("/pedidos/15/estado")
+        mockMvc.perform(MockMvcRequestBuilders.put("/pedidos/15/estado")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -255,7 +256,7 @@ public class PedidoControllerMockMvcTest {
                 .thenThrow(new PedidoNotFoundException(idInexistente));
 
         // Act & Assert
-        mockMvc.perform(put("/pedidos/888/estado")
+        mockMvc.perform(MockMvcRequestBuilders.put("/pedidos/888/estado")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isNotFound())
@@ -267,13 +268,13 @@ public class PedidoControllerMockMvcTest {
      * Retorna vacío (returnsEmpty) con código HTTP 204 NO CONTENT cuando se ejecuta con éxito.
      */
     @Test
-    public void pedidoController_eliminarPedido_returnsEmpty() throws Exception {
+    public void pedidoController_eliminarPedido_returnsNoContent() throws Exception {
         // Arrange
         Long id = 1L;
         Mockito.doNothing().when(pedidoService).delete(id);
 
         // Act & Assert
-        mockMvc.perform(delete("/pedidos/1"))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/pedidos/1"))
                 .andExpect(status().isNoContent());
 
         Mockito.verify(pedidoService).delete(id);
