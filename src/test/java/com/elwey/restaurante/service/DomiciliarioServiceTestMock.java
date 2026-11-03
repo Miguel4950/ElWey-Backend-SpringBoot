@@ -26,8 +26,9 @@ import static org.mockito.Mockito.verify;
  * Sigue la doctrina del profesor Angarita (CourseServiceTest):
  * - @ExtendWith(MockitoExtension.class)
  * - @ActiveProfiles("test")
- * - Nomenclatura <metodo>_<comportamiento>
+ * - Nomenclatura [metodo]_[lo_que_retorna]
  * - Aislamiento estricto de repositorios mediante simulación Mockito.
+ * - Separación de pruebas de éxito y fallo en métodos independientes.
  */
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -43,12 +44,12 @@ public class DomiciliarioServiceTestMock {
     private DomiciliarioServiceImpl domiciliarioService;
 
     /**
-     * Regla de negocio: Si se intenta poner libre (disponible = true) a un domiciliario
+     * Prueba 1 [Regla de Negocio - Caso Conflicto/Fallo]: Si se intenta poner libre (disponible = true) a un domiciliario
      * que se encuentra en un pedido "Enviado", el servicio DEBE lanzar DomiciliarioConPedidoEnviadoException
-     * y NO guardar cambios en la base de datos.
+     * (retorna conflicto de validación) y NO guardar cambios en la base de datos.
      */
     @Test
-    public void actualizarDisponibilidad_throwsDomiciliarioConPedidoEnviadoException_whenTienePedidoEnviado() {
+    public void actualizarDisponibilidad_whenTienePedidoEnviado_returnsConflict() {
         // Arrange
         Long domiId = 1L;
         Domiciliario domiOcupado = Domiciliario.builder()
@@ -78,11 +79,11 @@ public class DomiciliarioServiceTestMock {
     }
 
     /**
-     * Regla de negocio: Si el domiciliario no tiene pedidos en estado "Enviado" (por ejemplo, pedidos Entregados
-     * o lista vacía), se permite marcarlo como libre / disponible exitosamente.
+     * Prueba 2 [Regla de Negocio - Caso Éxito]: Si el domiciliario no tiene pedidos en estado "Enviado" (por ejemplo, pedidos Entregados
+     * o lista vacía), se permite marcarlo como libre / disponible exitosamente retornando el Domiciliario actualizado.
      */
     @Test
-    public void actualizarDisponibilidad_returnsDomiciliario_whenNoTienePedidosEnviados() {
+    public void actualizarDisponibilidad_whenSinPedidosEnviados_returnsDomiciliario() {
         // Arrange
         Long domiId = 2L;
         Domiciliario domiOcupado = Domiciliario.builder()
@@ -121,11 +122,11 @@ public class DomiciliarioServiceTestMock {
     }
 
     /**
-     * Regla de negocio: Marcar como ocupado (disponible = false) a un domiciliario libre
-     * siempre es una operación permitida sin restricciones de pedidos en ruta.
+     * Prueba 3 [Caso Éxito Ocupado]: Marcar como ocupado (disponible = false) a un domiciliario libre
+     * siempre es una operación permitida sin restricciones de pedidos en ruta, retornando el Domiciliario actualizado.
      */
     @Test
-    public void actualizarDisponibilidad_permiteMarcarOcupado_inclusoConPedidoEnviado() {
+    public void actualizarDisponibilidad_marcarOcupado_returnsDomiciliario() {
         // Arrange
         Long domiId = 3L;
         Domiciliario domiLibre = Domiciliario.builder()
@@ -157,11 +158,11 @@ public class DomiciliarioServiceTestMock {
     }
 
     /**
-     * Regla de negocio en actualizar(): Valida que modificar los datos de un domiciliario e intentar
-     * activar su disponibilidad lance la excepción si tiene pedidos en estado "Enviado".
+     * Prueba 4 [Regla de Negocio en actualizar() - Caso Conflicto/Fallo]: Valida que modificar los datos de un domiciliario e intentar
+     * activar su disponibilidad lance la excepción (retorna conflicto) si tiene pedidos en estado "Enviado".
      */
     @Test
-    public void actualizar_throwsDomiciliarioConPedidoEnviadoException_whenIntentaPonerLibreConPedidoEnviado() {
+    public void actualizar_whenIntentaPonerLibreConPedidoEnviado_returnsConflict() {
         // Arrange
         Long domiId = 1L;
         Domiciliario domiActual = Domiciliario.builder()
@@ -192,5 +193,49 @@ public class DomiciliarioServiceTestMock {
                 .hasMessageContaining("Enviado (en ruta de despacho)");
 
         verify(domiciliarioRepo, never()).save(any());
+    }
+
+    /**
+     * Prueba 5 [Regla de Negocio en actualizar() - Caso Éxito]: Modificar datos y activar disponibilidad
+     * cuando no tiene pedidos en ruta, retornando la entidad Domiciliario actualizada.
+     */
+    @Test
+    public void actualizar_whenSinPedidosEnviados_returnsDomiciliario() {
+        // Arrange
+        Long domiId = 4L;
+        Domiciliario domiActual = Domiciliario.builder()
+                .id(domiId)
+                .nombre("Javier Morales")
+                .cedula("1040506070")
+                .celular("+57 318 888 9999")
+                .disponible(false)
+                .build();
+
+        Domiciliario datosModificados = Domiciliario.builder()
+                .nombre("Javier Morales Actualizado")
+                .celular("+57 318 999 0000")
+                .disponible(true)
+                .build();
+
+        Domiciliario domiGuardado = Domiciliario.builder()
+                .id(domiId)
+                .nombre("Javier Morales Actualizado")
+                .cedula("1040506070")
+                .celular("+57 318 999 0000")
+                .disponible(true)
+                .build();
+
+        Mockito.when(domiciliarioRepo.findById(domiId)).thenReturn(Optional.of(domiActual));
+        Mockito.when(pedidoRepo.findByDomiciliarioId(domiId)).thenReturn(List.of());
+        Mockito.when(domiciliarioRepo.save(any(Domiciliario.class))).thenReturn(domiGuardado);
+
+        // Act
+        Domiciliario resultado = domiciliarioService.actualizar(domiId, datosModificados);
+
+        // Assert
+        Assertions.assertThat(resultado).isNotNull();
+        Assertions.assertThat(resultado.getNombre()).isEqualTo("Javier Morales Actualizado");
+        Assertions.assertThat(resultado.getDisponible()).isTrue();
+        verify(domiciliarioRepo).save(any(Domiciliario.class));
     }
 }

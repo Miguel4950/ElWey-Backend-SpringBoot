@@ -24,7 +24,9 @@ import static org.mockito.Mockito.verify;
 /**
  * Pruebas unitarias de Servicio con Mocks (Semana 13).
  * Aísla la lógica de negocio simulando el comportamiento de los repositorios con Mockito.
- * Sigue la convención de nombres y anotaciones de la clase (CourseServiceTest).
+ * Sigue la convención de nombres y anotaciones de la clase (CourseServiceTest):
+ * [metodo]_[lo_que_retorna] (returnsPedido, returnsNotFound, returnsDouble, returnsZero).
+ * Cada escenario (éxito, fallo o frontera) se ejecuta en un método @Test independiente.
  */
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -55,11 +57,11 @@ public class PedidoServiceTestMock {
     private PedidoServiceImpl pedidoService;
 
     /**
-     * Prueba 1: Valida que crear un pedido con un cliente inexistente lance ClienteNotFoundException
-     * y garantice que jamás se llame a save() en el repositorio (no hay datos sucios).
+     * Prueba 1 [Caso Negativo]: Valida que crear un pedido con un cliente inexistente lance ClienteNotFoundException
+     * y garantice que jamás se llame a save() en el repositorio (retorna NotFound).
      */
     @Test
-    public void crearPedido_throwsClienteNotFoundException() {
+    public void crearPedido_returnsNotFound() {
         // Arrange
         Long clienteInexistenteId = 999L;
         CrearPedidoDto request = CrearPedidoDto.builder()
@@ -83,7 +85,8 @@ public class PedidoServiceTestMock {
     }
 
     /**
-     * Prueba 2: Valida la lógica de negocio de creación de pedido y cálculo de subtotales/totales con mocks.
+     * Prueba 2 [Caso Positivo]: Valida la lógica de negocio de creación de pedido y cálculo de subtotales/totales con mocks.
+     * Retorna el objeto Pedido persistido con su estado inicial.
      */
     @Test
     public void crearPedido_returnsPedido() {
@@ -140,7 +143,8 @@ public class PedidoServiceTestMock {
     }
 
     /**
-     * Prueba 3: Actualizar estado con nuevo domiciliario asignado explícitamente.
+     * Prueba 3 [Caso Positivo]: Actualizar estado a 'Enviado' con nuevo domiciliario asignado explícitamente.
+     * Retorna el Pedido actualizado con el domiciliario vinculado.
      */
     @Test
     public void actualizarEstado_returnsPedido() {
@@ -176,12 +180,12 @@ public class PedidoServiceTestMock {
     }
 
     /**
-     * Prueba 4: Regla de negocio de auto-asignación: si el pedido se despacha a 'Enviado' sin domiciliario asignado,
-     * el servicio busca automáticamente en la flota disponible. Si no hay disponibles, no falla.
+     * Prueba 4 [Caso Positivo Auto-Asignación]: Cuando un pedido se despacha sin domiciliario especificado,
+     * el servicio busca automáticamente en la flota libre y auto-asigna el repartidor disponible.
      */
     @Test
-    public void actualizarEstado_returnsPedidoWithoutDomiciliarioWhenNoneAvailable() {
-        // Escenario A: Domiciliario libre disponible -> se auto-asigna
+    public void actualizarEstado_autoAsignaFlota_returnsPedido() {
+        // Arrange
         Long pedidoId = 5L;
         Pedido pedidoSinDomi = Pedido.builder()
                 .id(pedidoId)
@@ -200,29 +204,50 @@ public class PedidoServiceTestMock {
         Mockito.when(domiciliarioRepository.findByDisponible(true)).thenReturn(List.of(domLibre));
         Mockito.when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        // Act
         Pedido despachado = pedidoService.actualizarEstado(pedidoId, "Enviado", null);
 
+        // Assert
         Assertions.assertThat(despachado).isNotNull();
         Assertions.assertThat(despachado.getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(despachado.getDomiciliario()).isNotNull();
         Assertions.assertThat(despachado.getDomiciliario().getNombre()).isEqualTo("Javier Morales");
+    }
 
-        // Escenario B: Ningún domiciliario disponible -> no debe lanzar NPE, se mantiene null
-        Pedido pedidoOtro = Pedido.builder().id(6L).estado("Cocinando").domiciliario(null).items(new ArrayList<>()).build();
-        Mockito.when(pedidoRepository.findById(6L)).thenReturn(Optional.of(pedidoOtro));
+    /**
+     * Prueba 5 [Caso Frontera/Vacío Auto-Asignación]: Si ningún domiciliario está disponible al despachar,
+     * el servicio actualiza el estado sin fallar y mantiene el domiciliario como null.
+     */
+    @Test
+    public void actualizarEstado_sinFlotaDisponible_returnsPedido() {
+        // Arrange
+        Long pedidoId = 6L;
+        Pedido pedidoOtro = Pedido.builder()
+                .id(pedidoId)
+                .estado("Cocinando")
+                .domiciliario(null)
+                .items(new ArrayList<>())
+                .build();
+
+        Mockito.when(pedidoRepository.findById(pedidoId)).thenReturn(Optional.of(pedidoOtro));
         Mockito.when(domiciliarioRepository.findByDisponible(true)).thenReturn(List.of());
+        Mockito.when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Pedido despachadoSinFlota = pedidoService.actualizarEstado(6L, "Enviado", null);
+        // Act
+        Pedido despachadoSinFlota = pedidoService.actualizarEstado(pedidoId, "Enviado", null);
+
+        // Assert
+        Assertions.assertThat(despachadoSinFlota).isNotNull();
         Assertions.assertThat(despachadoSinFlota.getEstado()).isEqualTo("Enviado");
         Assertions.assertThat(despachadoSinFlota.getDomiciliario()).isNull();
     }
 
     /**
-     * Prueba 5: Cálculo matemático puro del total consolidando múltiples platos y adicionales,
-     * incluyendo pruebas de frontera defensiva (nulos y colecciones vacías).
+     * Prueba 6 [Caso Positivo Matemático]: Cálculo matemático puro del total consolidando múltiples platos y adicionales.
+     * Retorna el valor escalar Double exacto.
      */
     @Test
-    public void calcularTotal_returnsDouble() {
+    public void calcularTotal_conPlatosYAdicionales_returnsDouble() {
         // Arrange
         Comida taco = Comida.builder().nombre("Taco").precio(15000.0).build();
         Comida burrito = Comida.builder().nombre("Burrito").precio(25000.0).build();
@@ -253,11 +278,20 @@ public class PedidoServiceTestMock {
                 .items(List.of(item1, item2))
                 .build();
 
-        // Act & Assert 1: Suma matemática exacta: 30000 + 33000 = 63000.0
+        // Act
         Double total = pedidoService.calcularTotal(pedido);
-        Assertions.assertThat(total).isEqualTo(63000.0);
 
-        // Act & Assert 2: Verificación defensiva contra nulos
+        // Assert: 30000 + 33000 = 63000.0
+        Assertions.assertThat(total).isEqualTo(63000.0);
+    }
+
+    /**
+     * Prueba 7 [Caso Defensivo/Vacío]: Verificación defensiva cuando el pedido es nulo o la lista de items está vacía.
+     * Retorna 0.0 (returnsZero) evitando NullPointerException.
+     */
+    @Test
+    public void calcularTotal_cuandoPedidoNulo_returnsZero() {
+        // Act & Assert
         Assertions.assertThat(pedidoService.calcularTotal(null)).isEqualTo(0.0);
         Assertions.assertThat(pedidoService.calcularTotal(Pedido.builder().items(new ArrayList<>()).build())).isEqualTo(0.0);
     }

@@ -3,24 +3,21 @@ package com.elwey.restaurante.repository;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Pruebas unitarias para el CRUD de ComidaRepository (Semana 13).
- * Sigue el patrón Arrange - Act - Assert
- * con @DataJpaTest, @RunWith(SpringRunner.class) y AssertJ.
- * Valida persistencia, mapeo relacional, unicidad, integridad y operaciones
- * CRUD.
+ * Sigue la doctrina del docente Juan Sebastián Angarita:
+ * - JUnit 5 Jupiter puro con @DataJpaTest y @BeforeEach
+ * - Patrón Arrange - Act - Assert con AssertJ
+ * - Nomenclatura doctrinal: [componente]_[metodo]_[lo_que_retorna]
  */
-@RunWith(SpringRunner.class)
 @DataJpaTest
 public class ComidaRepositoryTest {
 
@@ -40,7 +37,8 @@ public class ComidaRepositoryTest {
                         .nombre("Tacos")
                         .descripcion("Auténticos tacos mexicanos")
                         .activo(true)
-                        .build());
+                        .build()
+        );
 
         comidaInicial = comidaRepository.save(
                 Comida.builder()
@@ -51,14 +49,13 @@ public class ComidaRepositoryTest {
                         .etiqueta("Estrella")
                         .activo(true)
                         .categoria(categoriaTacos)
-                        .build());
+                        .build()
+        );
     }
 
     /**
      * Prueba 1 [CREATE]: Guardar una nueva entidad Comida.
-     * Valida que se genere el ID autoincremental, los valores se persistan con
-     * exactitud
-     * y la relación ManyToOne con Categoria quede correctamente vinculada.
+     * Retorna el objeto Comida persistido con su ID asignado.
      */
     @Test
     public void comidaRepository_save_Comida() {
@@ -88,11 +85,10 @@ public class ComidaRepositoryTest {
 
     /**
      * Prueba 2 [READ ALL]: Consultar todas las entidades activas en el repositorio.
-     * Valida que retorne una lista no vacía y que contenga los elementos
-     * previamente persistidos.
+     * Retorna una lista (returnsList) de comidas.
      */
     @Test
-    public void comidaRepository_findAll_returnsNonEmptyList() {
+    public void comidaRepository_findAll_returnsList() {
         // Act
         List<Comida> comidas = comidaRepository.findAll();
 
@@ -104,12 +100,26 @@ public class ComidaRepositoryTest {
     }
 
     /**
-     * Prueba 3 [READ BY ID - Caso Negativo]: Buscar una entidad inexistente.
-     * Valida que el repositorio retorne Optional.empty() sin lanzar excepciones
-     * inesperadas.
+     * Prueba 3 [READ BY ID - Caso Positivo]: Buscar una entidad existente por su ID.
+     * Retorna el objeto Comida envuelto en Optional.
      */
     @Test
-    public void comidaRepository_findById_returnsEmptyWhenNotFound() {
+    public void comidaRepository_findById_Comida() {
+        // Act
+        Optional<Comida> comida = comidaRepository.findById(comidaInicial.getId());
+
+        // Assert
+        Assertions.assertThat(comida).isPresent();
+        Assertions.assertThat(comida.get().getId()).isEqualTo(comidaInicial.getId());
+        Assertions.assertThat(comida.get().getNombre()).isEqualTo("Tacos al Pastor");
+    }
+
+    /**
+     * Prueba 4 [READ BY ID - Caso Negativo]: Buscar una entidad inexistente.
+     * Retorna NotFound / vacío (returnsNotFound).
+     */
+    @Test
+    public void comidaRepository_findById_returnsNotFound() {
         // Act
         Optional<Comida> comida = comidaRepository.findById(-1L);
         Optional<Comida> comidaIdInexistente = comidaRepository.findById(99999L);
@@ -120,13 +130,11 @@ public class ComidaRepositoryTest {
     }
 
     /**
-     * Prueba 4 [UPDATE]: Modificar campos de una entidad existente y persistir
-     * cambios.
-     * Valida que la actualización persista tanto en la entidad devuelta como en la
-     * base de datos física.
+     * Prueba 5 [UPDATE]: Modificar campos de una entidad existente y persistir cambios.
+     * Retorna el objeto Comida modificado.
      */
     @Test
-    public void comidaRepository_update_modifiesComida() {
+    public void comidaRepository_update_Comida() {
         // Arrange
         Comida comidaExistente = comidaRepository.findById(comidaInicial.getId()).orElse(null);
         Assertions.assertThat(comidaExistente).isNotNull();
@@ -152,12 +160,11 @@ public class ComidaRepositoryTest {
     }
 
     /**
-     * Prueba 5 [DELETE]: Eliminar una entidad por su identificador.
-     * Valida que tras la eliminación física, la búsqueda por ID resulte vacía y
-     * disminuya el conteo.
+     * Prueba 6 [DELETE]: Eliminar una entidad por su identificador.
+     * Retorna vacío (returnsEmpty) / void tras eliminar del repositorio.
      */
     @Test
-    public void comidaRepository_delete_removesComida() {
+    public void comidaRepository_delete_returnsEmpty() {
         // Arrange
         Long id = comidaInicial.getId();
         long totalAntes = comidaRepository.count();
