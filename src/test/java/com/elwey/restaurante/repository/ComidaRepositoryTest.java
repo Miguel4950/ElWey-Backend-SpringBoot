@@ -3,8 +3,8 @@ package com.elwey.restaurante.repository;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -15,8 +15,10 @@ import java.util.Optional;
 
 /**
  * Pruebas unitarias para el CRUD de ComidaRepository (Semana 13).
- * Sigue el patrón Arrange - Act - Assert con @DataJpaTest, @RunWith(SpringRunner.class) y AssertJ.
- * Valida persistencia, mapeo relacional, unicidad, integridad y operaciones CRUD.
+ * Sigue el patrón Arrange - Act - Assert
+ * con @DataJpaTest, @RunWith(SpringRunner.class) y AssertJ.
+ * Valida persistencia, mapeo relacional, unicidad, integridad y operaciones
+ * CRUD.
  */
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -31,15 +33,14 @@ public class ComidaRepositoryTest {
     private Categoria categoriaTacos;
     private Comida comidaInicial;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         categoriaTacos = categoriaRepository.save(
                 Categoria.builder()
                         .nombre("Tacos")
                         .descripcion("Auténticos tacos mexicanos")
                         .activo(true)
-                        .build()
-        );
+                        .build());
 
         comidaInicial = comidaRepository.save(
                 Comida.builder()
@@ -50,13 +51,13 @@ public class ComidaRepositoryTest {
                         .etiqueta("Estrella")
                         .activo(true)
                         .categoria(categoriaTacos)
-                        .build()
-        );
+                        .build());
     }
 
     /**
      * Prueba 1 [CREATE]: Guardar una nueva entidad Comida.
-     * Valida que se genere el ID autoincremental, los valores se persistan con exactitud
+     * Valida que se genere el ID autoincremental, los valores se persistan con
+     * exactitud
      * y la relación ManyToOne con Categoria quede correctamente vinculada.
      */
     @Test
@@ -87,7 +88,8 @@ public class ComidaRepositoryTest {
 
     /**
      * Prueba 2 [READ ALL]: Consultar todas las entidades activas en el repositorio.
-     * Valida que retorne una lista no vacía y que contenga los elementos previamente persistidos.
+     * Valida que retorne una lista no vacía y que contenga los elementos
+     * previamente persistidos.
      */
     @Test
     public void comidaRepository_findAll_returnsNonEmptyList() {
@@ -103,7 +105,8 @@ public class ComidaRepositoryTest {
 
     /**
      * Prueba 3 [READ BY ID - Caso Negativo]: Buscar una entidad inexistente.
-     * Valida que el repositorio retorne Optional.empty() sin lanzar excepciones inesperadas.
+     * Valida que el repositorio retorne Optional.empty() sin lanzar excepciones
+     * inesperadas.
      */
     @Test
     public void comidaRepository_findById_returnsEmptyWhenNotFound() {
@@ -117,8 +120,10 @@ public class ComidaRepositoryTest {
     }
 
     /**
-     * Prueba 4 [UPDATE]: Modificar campos de una entidad existente y persistir cambios.
-     * Valida que la actualización persista tanto en la entidad devuelta como en la base de datos física.
+     * Prueba 4 [UPDATE]: Modificar campos de una entidad existente y persistir
+     * cambios.
+     * Valida que la actualización persista tanto en la entidad devuelta como en la
+     * base de datos física.
      */
     @Test
     public void comidaRepository_update_modifiesComida() {
@@ -148,7 +153,8 @@ public class ComidaRepositoryTest {
 
     /**
      * Prueba 5 [DELETE]: Eliminar una entidad por su identificador.
-     * Valida que tras la eliminación física, la búsqueda por ID resulte vacía y disminuya el conteo.
+     * Valida que tras la eliminación física, la búsqueda por ID resulte vacía y
+     * disminuya el conteo.
      */
     @Test
     public void comidaRepository_delete_removesComida() {
