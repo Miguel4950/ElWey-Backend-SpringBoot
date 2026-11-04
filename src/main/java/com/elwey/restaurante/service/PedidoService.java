@@ -4,6 +4,7 @@ import com.elwey.restaurante.dto.CrearPedidoDto;
 import com.elwey.restaurante.dto.ItemPedidoDto;
 import com.elwey.restaurante.entities.ItemPedido;
 import com.elwey.restaurante.entities.Pedido;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,6 +20,8 @@ public interface PedidoService {
     List<Pedido> findByCliente(Long clienteId);
 
     List<Pedido> findByDomiciliario(Long domiciliarioId);
+
+    List<Pedido> buscarPorRangoFechas(LocalDateTime inicio, LocalDateTime fin);
 
     List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId);
 

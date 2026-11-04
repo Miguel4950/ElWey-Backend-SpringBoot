@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -54,6 +56,18 @@ public class PedidoController {
     public ResponseEntity<List<PedidoDto>> mostrarPedidosPorCliente(@PathVariable("clienteId") Long clienteId) {
         log.info("Petición REST: consultando pedidos para cliente ID: {}", clienteId);
         List<PedidoDto> dtos = pedidoService.findByCliente(clienteId).stream()
+                .map(PedidoDto::fromEntity)
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @Operation(summary = "Filtrar pedidos por rango de fechas de creación")
+    @GetMapping("/fechas")
+    public ResponseEntity<List<PedidoDto>> filtrarPedidosPorFechas(
+            @RequestParam("inicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam("fin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fin) {
+        log.info("Petición REST: filtrando pedidos por rango de fechas desde {} hasta {}", inicio, fin);
+        List<PedidoDto> dtos = pedidoService.buscarPorRangoFechas(inicio, fin).stream()
                 .map(PedidoDto::fromEntity)
                 .toList();
         return ResponseEntity.ok(dtos);

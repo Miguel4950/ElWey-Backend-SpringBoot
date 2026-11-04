@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,4 +24,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     @Query("SELECT COUNT(p) FROM Pedido p WHERE p.estado = :estado")
     Long countPedidosPorEstado(@Param("estado") String estado);
+
+    @Query("SELECT p FROM Pedido p WHERE p.fechaCreacion >= :inicio AND p.fechaCreacion <= :fin ORDER BY p.fechaCreacion DESC")
+    List<Pedido> findPedidosPorRangoFechas(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 }

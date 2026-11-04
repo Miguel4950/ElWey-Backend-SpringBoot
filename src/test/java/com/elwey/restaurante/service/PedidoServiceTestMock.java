@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -294,5 +295,50 @@ public class PedidoServiceTestMock {
         // Act & Assert
         Assertions.assertThat(pedidoService.calcularTotal(null)).isEqualTo(0.0);
         Assertions.assertThat(pedidoService.calcularTotal(Pedido.builder().items(new ArrayList<>()).build())).isEqualTo(0.0);
+    }
+
+    @Test
+    public void pedidoService_buscarPorRangoFechas_retornaPedidosEnRango() {
+        // Arrange
+        LocalDateTime inicio = LocalDateTime.of(2026, 11, 1, 0, 0);
+        LocalDateTime fin = LocalDateTime.of(2026, 11, 4, 23, 59);
+        Pedido p1 = Pedido.builder().id(101L).estado("Cocinando").fechaCreacion(LocalDateTime.of(2026, 11, 2, 12, 0)).items(new ArrayList<>()).build();
+        Pedido p2 = Pedido.builder().id(102L).estado("Entregado").fechaCreacion(LocalDateTime.of(2026, 11, 3, 14, 0)).items(new ArrayList<>()).build();
+        Mockito.when(pedidoRepository.findPedidosPorRangoFechas(inicio, fin)).thenReturn(List.of(p1, p2));
+
+        // Act
+        List<Pedido> resultado = pedidoService.buscarPorRangoFechas(inicio, fin);
+
+        // Assert
+        Assertions.assertThat(resultado).hasSize(2);
+        Assertions.assertThat(resultado).extracting(Pedido::getId).containsExactly(101L, 102L);
+        Mockito.verify(pedidoRepository).findPedidosPorRangoFechas(inicio, fin);
+    }
+
+    @Test
+    public void pedidoService_buscarPorRangoFechas_retornaListaVacia() {
+        // Arrange
+        LocalDateTime inicio = LocalDateTime.of(2025, 1, 1, 0, 0);
+        LocalDateTime fin = LocalDateTime.of(2025, 1, 2, 23, 59);
+        Mockito.when(pedidoRepository.findPedidosPorRangoFechas(inicio, fin)).thenReturn(List.of());
+
+        // Act
+        List<Pedido> resultado = pedidoService.buscarPorRangoFechas(inicio, fin);
+
+        // Assert
+        Assertions.assertThat(resultado).isEmpty();
+        Mockito.verify(pedidoRepository).findPedidosPorRangoFechas(inicio, fin);
+    }
+
+    @Test
+    public void pedidoService_buscarPorRangoFechas_fechasInvalidasLanzaIllegalArgumentException() {
+        // Arrange
+        LocalDateTime inicio = LocalDateTime.of(2026, 11, 5, 0, 0);
+        LocalDateTime fin = LocalDateTime.of(2026, 11, 1, 0, 0);
+
+        // Act & Assert
+        Assertions.assertThatThrownBy(() -> pedidoService.buscarPorRangoFechas(inicio, fin))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("La fecha de inicio no puede ser posterior");
     }
 }

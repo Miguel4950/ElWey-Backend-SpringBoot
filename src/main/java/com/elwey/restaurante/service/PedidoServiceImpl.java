@@ -93,6 +93,20 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Pedido> buscarPorRangoFechas(LocalDateTime inicio, LocalDateTime fin) {
+        if (inicio == null || fin == null) {
+            throw new IllegalArgumentException("Las fechas de inicio y fin no pueden ser nulas para el filtrado");
+        }
+        if (inicio.isAfter(fin)) {
+            throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin");
+        }
+        List<Pedido> pedidos = pedidoRepository.findPedidosPorRangoFechas(inicio, fin);
+        pedidos.forEach(this::calcularTotales);
+        return pedidos;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ItemPedidoDto> obtenerItemsPedido(Long pedidoId) {
         Pedido pedido = searchById(pedidoId);
         return pedido.getItems().stream()

@@ -279,4 +279,26 @@ public class PedidoControllerMockMvcTest {
 
         Mockito.verify(pedidoService).delete(id);
     }
+
+    @Test
+    public void pedidoController_filtrarPedidosPorFechas_returnsOk() throws Exception {
+        // Arrange
+        Pedido p = Pedido.builder()
+                .id(10L)
+                .estado("Listo")
+                .fechaCreacion(LocalDateTime.of(2026, 11, 2, 10, 0))
+                .cliente(Cliente.builder().id(1L).nombre("Carlos").apellido("Vela").build())
+                .items(new ArrayList<>())
+                .build();
+        Mockito.when(pedidoService.buscarPorRangoFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(p));
+
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/pedidos/fechas")
+                        .param("inicio", "2026-11-01T00:00:00")
+                        .param("fin", "2026-11-04T23:59:00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(10))
+                .andExpect(jsonPath("$[0].estado").value("Listo"));
+    }
 }
