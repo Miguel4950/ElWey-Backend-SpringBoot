@@ -17,7 +17,8 @@ import java.util.List;
 
 /**
  * Implementación de la capa de servicio para Adicional.
- * Proporciona lógica transaccional para CRUD y desvinculación segura en relaciones ManyToMany con Categoria.
+ * Proporciona lógica transaccional para CRUD y desvinculación segura en
+ * relaciones ManyToMany con Categoria.
  */
 @Service
 public class AdicionalServiceImpl implements AdicionalService {
@@ -62,6 +63,16 @@ public class AdicionalServiceImpl implements AdicionalService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Adicional> findByComidaIdAndActivoTrue(Long comidaId) {
+        Comida comida = comidaRepository.findById(comidaId).orElse(null);
+        if (comida != null && comida.getCategoria() != null) {
+            return adicionalRepository.findByCategoriasIdAndActivoTrue(comida.getCategoria().getId());
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Adicional> findByCategoriaId(Long categoriaId) {
         return adicionalRepository.findByCategoriasId(categoriaId);
     }
@@ -97,7 +108,8 @@ public class AdicionalServiceImpl implements AdicionalService {
             throw new AdicionalEnUsoException(id, adicional.getNombre());
         }
 
-        // Desvincular de las categorías dueñas de la relación ManyToMany (tabla categoria_adicional)
+        // Desvincular de las categorías dueñas de la relación ManyToMany (tabla
+        // categoria_adicional)
         if (adicional.getCategorias() != null) {
             for (Categoria c : adicional.getCategorias()) {
                 if (c.getAdicionales() != null) {

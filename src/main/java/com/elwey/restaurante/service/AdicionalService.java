@@ -17,6 +17,8 @@ public interface AdicionalService {
 
     List<Adicional> findByComidaId(Long comidaId);
 
+    List<Adicional> findByComidaIdAndActivoTrue(Long comidaId);
+
     List<Adicional> findByCategoriaId(Long categoriaId);
 
     Adicional save(Adicional adicional);

@@ -1,7 +1,6 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.AdicionalDto;
-import com.elwey.restaurante.dto.AdicionalListadoDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.service.AdicionalService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,10 +33,10 @@ public class AdicionalController {
 
     @Operation(summary = "Listar todos los adicionales registrados")
     @GetMapping({ "", "/", "/all" })
-    public ResponseEntity<List<AdicionalListadoDto>> listarTodos() {
+    public ResponseEntity<List<AdicionalDto>> listarTodos() {
         log.info("Petición REST: listar todos los adicionales");
-        List<AdicionalListadoDto> dtos = adicionalService.findAll().stream()
-                .map(AdicionalListadoDto::fromEntity)
+        List<AdicionalDto> dtos = adicionalService.findAll().stream()
+                .map(AdicionalDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -47,6 +46,16 @@ public class AdicionalController {
     public ResponseEntity<AdicionalDto> obtenerPorId(@PathVariable("id") Long id) {
         log.info("Petición REST: obtener adicional con ID: {}", id);
         return ResponseEntity.ok(AdicionalDto.fromEntity(adicionalService.findById(id)));
+    }
+
+    @Operation(summary = "Listar los adicionales activos para una comida específica")
+    @GetMapping("/comida/{comidaId}/activos")
+    public ResponseEntity<List<AdicionalDto>> listarPorComidaActivos(@PathVariable("comidaId") Long comidaId) {
+        log.info("Petición REST: listar adicionales para la comida ID: {}", comidaId);
+        List<AdicionalDto> dtos = adicionalService.findByComidaIdAndActivoTrue(comidaId).stream()
+                .map(AdicionalDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @Operation(summary = "Listar los adicionales disponibles para una comida específica")

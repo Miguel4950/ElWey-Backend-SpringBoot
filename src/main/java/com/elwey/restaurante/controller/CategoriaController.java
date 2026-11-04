@@ -1,6 +1,7 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.CategoriaAdicionalesRequest;
+import com.elwey.restaurante.dto.CategoriaConAdicionalesDto;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.service.CategoriaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,13 @@ public class CategoriaController {
     public ResponseEntity<List<Categoria>> listarCategorias() {
         log.info("Petición REST: listar categorías");
         return ResponseEntity.ok(categoriaService.seeAll());
+    }
+
+    @Operation(summary = "Listar todas las categorías con los IDs de sus adicionales")
+    @GetMapping("/adicionales")
+    public ResponseEntity<List<CategoriaConAdicionalesDto>> obtenerCategoriasConAdicionales() {
+        log.info("Petición REST: listar categorías con sus adicionales");
+        return ResponseEntity.ok(categoriaService.obtenerCategoriasConAdicionales());
     }
 
     @Operation(summary = "Obtener una categoría por su ID")

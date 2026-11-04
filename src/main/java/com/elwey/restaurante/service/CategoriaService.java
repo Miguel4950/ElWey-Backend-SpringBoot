@@ -3,6 +3,7 @@ package com.elwey.restaurante.service;
 import java.util.List;
 
 import com.elwey.restaurante.dto.CategoriaAdicionalesRequest;
+import com.elwey.restaurante.dto.CategoriaConAdicionalesDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
@@ -10,6 +11,8 @@ import com.elwey.restaurante.entities.Comida;
 public interface CategoriaService {
 
     List<Categoria> seeAll();
+
+    List<CategoriaConAdicionalesDto> obtenerCategoriasConAdicionales();
 
     Categoria searchById(Long id);
 

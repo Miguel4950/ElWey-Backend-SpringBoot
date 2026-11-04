@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.elwey.restaurante.dto.CategoriaAdicionalesRequest;
+import com.elwey.restaurante.dto.CategoriaConAdicionalesDto;
 import com.elwey.restaurante.entities.Adicional;
 import com.elwey.restaurante.entities.Categoria;
 import com.elwey.restaurante.entities.Comida;
@@ -21,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoriaServiceImpl implements CategoriaService {
@@ -40,6 +42,14 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional(readOnly = true)
     public List<Categoria> seeAll() {
         return repo.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoriaConAdicionalesDto> obtenerCategoriasConAdicionales() {
+        return repo.findAll().stream()
+                .map(CategoriaConAdicionalesDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -12,6 +12,10 @@ import java.util.List;
 @Repository
 public interface AdicionalRepository extends JpaRepository<Adicional, Long> {
     List<Adicional> findByCategoriasId(Long categoriaId);
+
     List<Adicional> findByActivoTrue();
+
     List<Adicional> findByNombre(String nombre);
+
+    List<Adicional> findByCategoriasIdAndActivoTrue(Long categoriaId);
 }
