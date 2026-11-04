@@ -50,8 +50,8 @@ public class AdicionalController {
 
     @Operation(summary = "Listar los adicionales activos para una comida específica")
     @GetMapping("/comida/{comidaId}/activos")
-    public ResponseEntity<List<AdicionalDto>> listarPorComidaActivos(@PathVariable("comidaId") Long comidaId) {
-        log.info("Petición REST: listar adicionales para la comida ID: {}", comidaId);
+    public ResponseEntity<List<AdicionalDto>> listarActivosPorComidaId(@PathVariable("comidaId") Long comidaId) {
+        log.info("Petición REST: listar adicionales activos para la comida ID: {}", comidaId);
         List<AdicionalDto> dtos = adicionalService.findByComidaIdAndActivoTrue(comidaId).stream()
                 .map(AdicionalDto::fromEntity)
                 .collect(Collectors.toList());
@@ -60,7 +60,7 @@ public class AdicionalController {
 
     @Operation(summary = "Listar los adicionales disponibles para una comida específica")
     @GetMapping("/comida/{comidaId}")
-    public ResponseEntity<List<AdicionalDto>> listarPorComida(@PathVariable("comidaId") Long comidaId) {
+    public ResponseEntity<List<AdicionalDto>> listarPorComidaId(@PathVariable("comidaId") Long comidaId) {
         log.info("Petición REST: listar adicionales para la comida ID: {}", comidaId);
         List<AdicionalDto> dtos = adicionalService.findByComidaId(comidaId).stream()
                 .map(AdicionalDto::fromEntity)
