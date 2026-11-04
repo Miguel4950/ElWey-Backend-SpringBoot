@@ -8,6 +8,7 @@ import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.service.PedidoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +90,7 @@ public class PedidoController {
 
     @Operation(summary = "Crear un nuevo pedido en el sistema")
     @PostMapping("/ordenar")
-    public ResponseEntity<PedidoDto> ordenarPlatoConAdicionales(@RequestBody CrearPedidoDto orderRequest) {
+    public ResponseEntity<PedidoDto> ordenarPlatoConAdicionales(@Valid @RequestBody CrearPedidoDto orderRequest) {
         if (orderRequest == null || orderRequest.getItems() == null || orderRequest.getItems().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }

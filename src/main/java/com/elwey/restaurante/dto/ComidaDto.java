@@ -4,6 +4,9 @@ import com.elwey.restaurante.entities.Comida;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 /**
@@ -19,8 +22,14 @@ import lombok.*;
 public class ComidaDto {
 
     private Long id;
+
+    @NotBlank(message = "El nombre del plato no puede estar vacío")
     private String nombre;
+
+    @NotNull(message = "El precio es obligatorio")
+    @Positive(message = "El precio debe ser un número positivo mayor a cero")
     private Double precio;
+
     private String descripcion;
 
     @JsonProperty("imagen_url")
@@ -59,7 +68,12 @@ public class ComidaDto {
                 .descripcion(this.descripcion)
                 .imagenUrl(this.imagenUrl)
                 .etiqueta(this.etiqueta)
-                .activo(this.activo != null ? this.activo : true)
+                .activo(this.activo)
                 .build();
+    }
+
+    public static Comida toEntity(ComidaDto dto) {
+        if (dto == null) return null;
+        return dto.toEntity();
     }
 }

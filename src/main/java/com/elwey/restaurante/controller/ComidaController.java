@@ -7,8 +7,8 @@ import com.elwey.restaurante.service.CategoriaService;
 import com.elwey.restaurante.service.ComidaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Controlador REST para el catálogo de comidas del restaurante "El Wey".
- * Permite operaciones CRUD completas sobre Comida.
+ * Controlador REST para el catálogo y gestión de Comidas en "El Wey".
  */
-@Tag(name = "Comidas", description = "Endpoints para el catálogo de platos")
+@Slf4j
+@Tag(name = "Comidas", description = "Endpoints para el catálogo de platos, bebidas, precios y estados")
 @RestController
-@RequestMapping({ "/comidas", "/comida" })
+@RequestMapping({ "/comida", "/comidas" })
 @CrossOrigin(origins = "http://localhost:4200")
 public class ComidaController {
 
@@ -33,20 +33,18 @@ public class ComidaController {
     @Autowired
     private CategoriaService categoriaService;
 
-    private static final Logger log = LoggerFactory.getLogger(ComidaController.class);
-
-    @Operation(summary = "Listar todas las comidas registradas")
-    @GetMapping({ "", "/", "/all" })
-    public ResponseEntity<List<ComidaDto>> listarTodos() {
-        log.info("Petición REST: consultar todas las comidas");
+    @Operation(summary = "Listar todas las comidas registradas (activas e inactivas)")
+    @GetMapping({ "", "/", "/all", "/lista", "/listar" })
+    public ResponseEntity<List<ComidaDto>> verComidas() {
+        log.info("Petición REST: listar todas las comidas");
         List<ComidaDto> dtos = service.listarTodos().stream()
                 .map(ComidaDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(summary = "Listar comidas activas para el menú digital y tabla")
-    @GetMapping({ "/activos", "/activas", "/tabla", "/tarjetas" })
+    @Operation(summary = "Listar exclusivamente comidas activas para el menú de clientes")
+    @GetMapping({ "/activas", "/menu" })
     public ResponseEntity<List<ComidaDto>> verComidasActivas() {
         log.info("Petición REST: consultar comidas activas desde base de datos");
         List<ComidaDto> dtos = service.listarActivas().stream()
@@ -75,7 +73,7 @@ public class ComidaController {
 
     @Operation(summary = "Crear un nuevo plato de comida con su categoría")
     @PostMapping({ "", "/", "/add", "/guardar" })
-    public ResponseEntity<Void> addComida(@RequestBody ComidaDto dto) {
+    public ResponseEntity<Void> addComida(@Valid @RequestBody ComidaDto dto) {
         log.info("Petición REST: crear plato: {} con categoría ID: {}",
                 dto.getNombre(), dto.getCategoriaId());
         Comida comida = dto.toEntity();
@@ -87,7 +85,7 @@ public class ComidaController {
     @PutMapping({ "/{id}", "/update", "/update/{id}" })
     public ResponseEntity<Void> updateComida(
             @PathVariable(name = "id", required = false) Long id,
-            @RequestBody ComidaDto dto) {
+            @Valid @RequestBody ComidaDto dto) {
         Long targetId = (id != null) ? id : dto.getId();
         log.info("Petición REST: actualizar plato ID: {}", targetId);
         Comida comida = dto.toEntity();

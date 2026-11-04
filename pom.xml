@@ -25,6 +25,12 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<!-- Validación declarativa con Jakarta Bean Validation (Semana 10) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
 		<!-- Thymeleaf (Semana 4) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -3,6 +3,7 @@ package com.elwey.restaurante.errors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -86,5 +87,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
             "mensaje", "No es posible eliminar o modificar este registro porque está vinculado a otros registros activos en el sistema del restaurante. Debe gestionar primero las dependencias asociadas."
         ));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        StringBuilder errores = new StringBuilder("Error de validación en campos: ");
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            errores.append("[").append(error.getField()).append(": ").append(error.getDefaultMessage()).append("] ");
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", errores.toString().trim()));
     }
 }
