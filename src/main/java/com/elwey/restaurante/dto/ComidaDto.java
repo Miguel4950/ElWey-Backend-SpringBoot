@@ -68,7 +68,7 @@ public class ComidaDto {
                 .descripcion(this.descripcion)
                 .imagenUrl(this.imagenUrl)
                 .etiqueta(this.etiqueta)
-                .activo(this.activo)
+                .activo(this.activo != null ? this.activo : true)
                 .build();
     }
 
