@@ -2,6 +2,7 @@ package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.AdministradorDto;
 import com.elwey.restaurante.dto.LoginRequestDto;
+import com.elwey.restaurante.dto.ResumenEstadisticasDto;
 import com.elwey.restaurante.service.AdministradorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,10 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controlador REST para la autenticación de Administrador en el sistema "El Wey".
+ * Controlador REST para la administración y métricas operacionales del sistema "El Wey".
  */
 @Slf4j
-@Tag(name = "Administradores", description = "Endpoint de autenticación para Administrador")
+@Tag(name = "Administradores", description = "Endpoints de autenticación y métricas operacionales para Administrador")
 @RestController
 @RequestMapping({ "/administrador", "/admin" })
 @CrossOrigin(origins = "http://localhost:4200")
@@ -32,5 +33,13 @@ public class AdministradorController {
 
         AdministradorDto respuesta = administradorService.autenticar(usuario, contrasena);
         return ResponseEntity.ok(respuesta);
+    }
+
+    @Operation(summary = "Consultar resumen consolidado de métricas operacionales del restaurante")
+    @GetMapping("/resumen")
+    public ResponseEntity<ResumenEstadisticasDto> obtenerResumenEstadisticas() {
+        log.info("Petición REST: obteniendo métricas operacionales de administración");
+        ResumenEstadisticasDto dto = administradorService.obtenerResumenEstadisticas();
+        return ResponseEntity.ok(dto);
     }
 }
