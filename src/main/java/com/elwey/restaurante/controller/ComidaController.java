@@ -43,8 +43,8 @@ public class ComidaController {
         return ResponseEntity.ok(dtos);
     }
 
-    @Operation(summary = "Listar exclusivamente comidas activas para el menú de clientes")
-    @GetMapping({ "/activas", "/menu" })
+    @Operation(summary = "Listar comidas activas para el menú digital y tabla")
+    @GetMapping({ "/activos", "/activas", "/tabla", "/tarjetas", "/menu" })
     public ResponseEntity<List<ComidaDto>> verComidasActivas() {
         log.info("Petición REST: consultar comidas activas desde base de datos");
         List<ComidaDto> dtos = service.listarActivas().stream()
