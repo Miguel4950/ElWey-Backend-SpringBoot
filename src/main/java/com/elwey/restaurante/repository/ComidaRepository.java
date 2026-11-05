@@ -21,4 +21,7 @@ public interface ComidaRepository extends JpaRepository<Comida, Long> {
 
     @Query("SELECT c FROM Comida c WHERE LOWER(c.categoria.nombre) = LOWER(:categoriaNombre) AND LOWER(c.etiqueta) = LOWER(:etiqueta)")
     List<Comida> findComidasPorCategoriaYEtiqueta(@Param("categoriaNombre") String categoriaNombre, @Param("etiqueta") String etiqueta);
+
+    @Query("SELECT DISTINCT c.etiqueta FROM Comida c WHERE c.etiqueta IS NOT NULL AND TRIM(c.etiqueta) <> '' AND c.activo = true ORDER BY c.etiqueta ASC")
+    List<String> findDistinctEtiquetasActivas();
 }

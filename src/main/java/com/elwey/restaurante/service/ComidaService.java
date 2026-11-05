@@ -19,4 +19,6 @@ public interface ComidaService {
     void eliminar(Long id);
 
     List<Comida> buscarPorNombre(String query);
+
+    List<String> listarEtiquetasActivas();
 }

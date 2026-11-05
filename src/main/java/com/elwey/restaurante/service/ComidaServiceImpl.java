@@ -82,4 +82,10 @@ public class ComidaServiceImpl implements ComidaService {
         String cleanQuery = query.trim();
         return comidaRepository.findByNombreContainingIgnoreCaseOrCategoriaNombreContainingIgnoreCase(cleanQuery, cleanQuery);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> listarEtiquetasActivas() {
+        return comidaRepository.findDistinctEtiquetasActivas();
+    }
 }

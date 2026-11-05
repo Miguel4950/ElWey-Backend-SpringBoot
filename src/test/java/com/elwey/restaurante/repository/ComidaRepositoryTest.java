@@ -178,4 +178,42 @@ public class ComidaRepositoryTest {
         Assertions.assertThat(comidaEliminada).isEmpty();
         Assertions.assertThat(totalDespues).isEqualTo(totalAntes - 1L);
     }
+
+    /**
+     * Prueba 7 [QUERY]: Listar etiquetas únicas y activas ordenadas alfabéticamente.
+     * Retorna lista de Strings únicos (returnsList).
+     */
+    @Test
+    public void comidaRepository_findDistinctEtiquetasActivas_returnsList() {
+        // Arrange
+        comidaRepository.save(
+                Comida.builder()
+                        .nombre("Tacos Suaderos")
+                        .precio(31000.0)
+                        .descripcion("Tacos de carne suave")
+                        .imagenUrl("/images/comidas/tacos-suaderos.jpg")
+                        .etiqueta("Tradicional")
+                        .activo(true)
+                        .categoria(categoriaTacos)
+                        .build()
+        );
+        comidaRepository.save(
+                Comida.builder()
+                        .nombre("Guacamole Supremo")
+                        .precio(18000.0)
+                        .descripcion("Aguacate con totopos")
+                        .imagenUrl("/images/comidas/guacamole.jpg")
+                        .etiqueta("Estrella") // Duplicada
+                        .activo(true)
+                        .categoria(categoriaTacos)
+                        .build()
+        );
+
+        // Act
+        List<String> etiquetas = comidaRepository.findDistinctEtiquetasActivas();
+
+        // Assert
+        Assertions.assertThat(etiquetas).isNotNull();
+        Assertions.assertThat(etiquetas).containsExactly("Estrella", "Tradicional");
+    }
 }

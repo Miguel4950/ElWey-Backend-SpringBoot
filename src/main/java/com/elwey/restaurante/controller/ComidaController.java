@@ -73,6 +73,13 @@ public class ComidaController {
         return ResponseEntity.ok(dtos);
     }
 
+    @Operation(summary = "Listar etiquetas únicas y activas de las comidas")
+    @GetMapping("/etiquetas")
+    public ResponseEntity<List<String>> listarEtiquetas() {
+        log.info("Petición REST: listar etiquetas activas de comidas");
+        return ResponseEntity.ok(service.listarEtiquetasActivas());
+    }
+
     @Operation(summary = "Crear un nuevo plato de comida con su categoría")
     @PostMapping({ "", "/", "/add", "/guardar" })
     public ResponseEntity<Void> addComida(@RequestBody ComidaDto dto) {
