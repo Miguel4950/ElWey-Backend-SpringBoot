@@ -1,6 +1,7 @@
 package com.elwey.restaurante.controller;
 
 import com.elwey.restaurante.dto.ClienteDto;
+import com.elwey.restaurante.dto.ClienteResumenDto;
 import com.elwey.restaurante.dto.LoginRequestDto;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.service.ClienteService;
@@ -55,6 +56,14 @@ public class ClienteController {
         log.info("Petición REST: obtener cliente con ID: {}", id);
         Cliente cliente = clienteService.obtenerPorId(id);
         return ResponseEntity.ok(ClienteDto.fromEntity(cliente));
+    }
+
+    @Operation(summary = "Obtener resumen financiero y de historial de pedidos de un cliente")
+    @GetMapping("/{id}/resumen")
+    public ResponseEntity<ClienteResumenDto> obtenerResumen(@PathVariable("id") Long id) {
+        log.info("Petición REST: obtener resumen de cliente ID: {}", id);
+        ClienteResumenDto resumen = clienteService.obtenerResumenCliente(id);
+        return ResponseEntity.ok(resumen);
     }
 
     @Operation(summary = "Registrar un nuevo cliente en la plataforma")

@@ -1,6 +1,7 @@
 package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.dto.ClienteDto;
+import com.elwey.restaurante.dto.ClienteResumenDto;
 import com.elwey.restaurante.entities.Cliente;
 import java.util.List;
 
@@ -25,4 +26,5 @@ public interface ClienteService {
 
     void eliminar(Long id);
 
+    ClienteResumenDto obtenerResumenCliente(Long clienteId);
 }

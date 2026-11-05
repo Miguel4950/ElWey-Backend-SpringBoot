@@ -1,6 +1,7 @@
 package com.elwey.restaurante.service;
 
 import com.elwey.restaurante.dto.ClienteDto;
+import com.elwey.restaurante.dto.ClienteResumenDto;
 import com.elwey.restaurante.entities.Cliente;
 import com.elwey.restaurante.entities.Pedido;
 import com.elwey.restaurante.errors.ClienteConPedidosException;
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Implementación del servicio de negocio para Clientes y Autenticación
@@ -30,6 +34,9 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Autowired
     private PedidoRepository pedidoRepo;
+
+    @Autowired
+    private PedidoService pedidoService;
 
     @Override
     @Transactional(readOnly = true)
@@ -158,5 +165,47 @@ public class ClienteServiceImpl implements ClienteService {
         }
 
         clienteRepo.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ClienteResumenDto obtenerResumenCliente(Long clienteId) {
+        log.info("Generando resumen de actividad para cliente ID: {}", clienteId);
+        Cliente cliente = clienteRepo.findById(clienteId)
+                .orElseThrow(() -> new ClienteNotFoundException(clienteId));
+
+        List<Pedido> pedidos = pedidoService.findByCliente(clienteId);
+        int totalPedidos = (pedidos != null) ? pedidos.size() : 0;
+        double totalGastado = 0.0;
+        String ultimoPedidoFecha = "Sin pedidos registrados";
+
+        if (pedidos != null && !pedidos.isEmpty()) {
+            totalGastado = pedidos.stream()
+                    .mapToDouble(p -> p.getTotal() != null ? p.getTotal() : 0.0)
+                    .sum();
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            ultimoPedidoFecha = pedidos.stream()
+                    .map(Pedido::getFechaCreacion)
+                    .filter(Objects::nonNull)
+                    .max(LocalDateTime::compareTo)
+                    .map(f -> f.format(formatter))
+                    .orElse("Sin pedidos registrados");
+        }
+
+        String nombre = (cliente.getNombreCompleto() != null && !cliente.getNombreCompleto().isBlank())
+                ? cliente.getNombreCompleto()
+                : cliente.getNombre();
+
+        return ClienteResumenDto.builder()
+                .clienteId(cliente.getId())
+                .nombreCompleto(nombre)
+                .email(cliente.getEmail())
+                .telefono(cliente.getTelefono())
+                .direccion(cliente.getDireccion())
+                .totalPedidos(totalPedidos)
+                .totalGastado(totalGastado)
+                .ultimoPedidoFecha(ultimoPedidoFecha)
+                .build();
     }
 }
